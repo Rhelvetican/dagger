@@ -1,0 +1,18 @@
+[package]
+    authors     = ["Rhelvetican"]
+    description = "A simple Balatro CLI mod manager inspired by `mini.deps`. Focuses on `lovely` and `smods` mods."
+    edition     = "2024"
+    keywords    = ["balatro", "manager", "mod"]
+    name        = "dagger"
+    version     = "0.1.0"
+
+[[bin]]
+    name = "dg"
+    path = "src/bin/dg.rs"
+
+[dependencies]
+    clap  = { features = ["derive"], version = "4" }
+    dirs  = "6"
+    git2  = { features = ["vendored-libgit2"], version = "0.20" }
+    mlua  = { features = ["luajit", "serde"], version = "0.11" }
+    serde = { features = ["derive"], version = "1" }
