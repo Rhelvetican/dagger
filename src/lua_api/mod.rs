@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use mlua::{FromLua, Lua, Result, Value};
+use mlua::{Lua, Result, Value};
 
 use crate::{models::DaggerSpecManager, DaggerSpecification};
 

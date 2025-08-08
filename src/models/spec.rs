@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::DaggerSpecManager;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Hash, PartialEq, Eq)]
 pub struct DaggerSpecification {
     pub uri: String,
     pub tag: Option<String>,
@@ -24,11 +24,11 @@ impl DaggerSpecification {
         match val {
             Value::String(s) => {
                 if let Ok(mut guard) = specs.try_borrow_mut() {
-                    guard.push(DaggerSpecification {
+                    guard.insert(DaggerSpecification {
                         uri: s.to_string_lossy(),
                         tag: None,
                         branch: None,
-                    })
+                    });
                 }
             }
             Value::Table(tbl) => {
@@ -37,12 +37,16 @@ impl DaggerSpecification {
                     && !tbl.contains_key(2).unwrap_or(true)
                 {
                     if let Ok(mut guard) = specs.try_borrow_mut() {
-                        guard.push(DaggerSpecification {
+                        guard.insert(DaggerSpecification {
                             uri: force_str(tbl.get(1)?)
-                                .ok_or(Error::runtime("No uri were supplied in the mod spec."))?,
+                                .ok_or(Error::runtime("No URI were supplied in the mod spec."))?,
                             tag: force_str(tbl.get("tag")?),
                             branch: force_str(tbl.get("branch")?),
-                        })
+                        });
+                    };
+
+                    if let Ok(val) = tbl.get("require") {
+                        Self::from_value(val, specs)?;
                     };
                 } else {
                     for item in tbl.sequence_values() {
@@ -56,4 +60,6 @@ impl DaggerSpecification {
 
         Ok(())
     }
+
+    // pub fn get_git_url(&self) -> String {}
 }
