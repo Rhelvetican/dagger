@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{convert::Infallible, path::PathBuf, str::FromStr};
 
 use mlua::{Error, FromLua, Lua, Result, Table, Value};
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,6 @@ pub struct DaggerSpecification {
     uri: String,
     tag: Option<String>,
     branch: Option<String>,
-    depends: Option<Vec<DaggerSpecification>>,
 }
 
 impl DaggerSpecification {
@@ -20,7 +19,6 @@ impl DaggerSpecification {
             uri: uri.to_string(),
             tag: None,
             branch: None,
-            depends: None,
         }
     }
 
@@ -36,27 +34,29 @@ impl DaggerSpecification {
             inst.branch = lua_optional(branch, lua);
         }
 
-        if let Ok(depends) = tbl.get::<Value>("depends") {
-            inst.depends = lua_optional(depends, lua);
-        }
-
         Ok(inst)
     }
 }
 
 impl FromLua for DaggerSpecification {
-    fn from_lua(value: Value, _: &Lua) -> Result<Self> {
+    fn from_lua(value: Value, lua: &Lua) -> Result<Self> {
         match value {
             Value::String(s) => {
                 let s = s.to_str()?;
                 Ok(Self::new(s))
             }
 
-            Value::Table(tbl) => {
-                todo!()
-            }
+            Value::Table(tbl) => Self::from_lua_tbl(&tbl, lua),
 
             _ => Err(Error::runtime("Incorrect specification supplied.")),
         }
+    }
+}
+
+impl FromStr for DaggerSpecification {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(Self::new(s))
     }
 }

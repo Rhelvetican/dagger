@@ -2,10 +2,11 @@
 //!
 //! The Balatro mod manager API.
 
-mod lua;
-pub use lua::load_dagger_lua_api;
 mod directories;
-pub use directories::Directories;
-
+mod lua_api;
 mod models;
 mod utils;
+
+pub use directories::Directories;
+pub use lua_api::load_dagger_lua_api;
+pub use models::*;
