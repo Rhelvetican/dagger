@@ -1,26 +1,36 @@
 use std::{
-    collections::HashSet,
+    collections::HashMap,
     ops::{Deref, DerefMut},
 };
 
 use crate::models::DaggerSpecification;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct DaggerSpecManager {
-    inner: HashSet<DaggerSpecification>,
+    inner: HashMap<Box<str>, DaggerSpecification>,
 }
 
 impl DaggerSpecManager {
     #[inline]
     pub fn new() -> Self {
         Self {
-            inner: HashSet::new(),
+            inner: HashMap::new(),
         }
+    }
+
+    #[inline]
+    pub fn insert(&mut self, key: &str, spec: DaggerSpecification) {
+        self.inner.insert(Box::from(key), spec);
+    }
+
+    #[inline]
+    pub fn insert_owned(&mut self, key: Box<str>, spec: DaggerSpecification) {
+        self.inner.insert(key, spec);
     }
 }
 
 impl Deref for DaggerSpecManager {
-    type Target = HashSet<DaggerSpecification>;
+    type Target = HashMap<Box<str>, DaggerSpecification>;
 
     fn deref(&self) -> &Self::Target {
         &self.inner

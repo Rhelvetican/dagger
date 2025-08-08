@@ -9,6 +9,8 @@ use std::{
 use dagger::{load_dagger_lua_api, DaggerSpecManager, Directories};
 use mlua::Lua;
 
+mod cli;
+
 fn main() -> Result<(), Box<dyn Error>> {
     let specs = Rc::new(RefCell::new(DaggerSpecManager::new()));
     let lua = Lua::new();

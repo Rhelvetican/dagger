@@ -1,48 +1,70 @@
 use std::{cell::RefCell, rc::Rc};
 
 use mlua::{Error, Result, Value};
-use serde::{Deserialize, Serialize};
 
 use crate::DaggerSpecManager;
 
-#[derive(Debug, Clone, Deserialize, Serialize, Hash, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum UpdateSource {
+    #[default]
+    GitHub,
+    GitServices(Box<str>),
+    Local,
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct DaggerSpecification {
-    pub uri: String,
-    pub tag: Option<String>,
-    pub branch: Option<String>,
+    pub tag: Option<Box<str>>,
+    pub branch: Option<Box<str>>,
+    pub src: UpdateSource,
 }
 
 impl DaggerSpecification {
     pub fn from_value(val: Value, specs: Rc<RefCell<DaggerSpecManager>>) -> Result<()> {
-        fn force_str(val: Value) -> Option<String> {
-            match val {
-                Value::String(s) => Some(s.to_string_lossy()),
-                _ => None,
-            }
-        }
-
         match val {
             Value::String(s) => {
                 if let Ok(mut guard) = specs.try_borrow_mut() {
-                    guard.insert(DaggerSpecification {
-                        uri: s.to_string_lossy(),
-                        tag: None,
-                        branch: None,
-                    });
+                    guard.insert(
+                        &s.to_str()?,
+                        DaggerSpecification {
+                            tag: None,
+                            branch: None,
+                            src: UpdateSource::GitHub,
+                        },
+                    );
                 }
             }
             Value::Table(tbl) => {
                 if (tbl.contains_key("tag").unwrap_or(false)
-                    || tbl.contains_key("branch").unwrap_or(false))
+                    || tbl.contains_key("branch").unwrap_or(false)
+                    || tbl.contains_key("method").unwrap_or(false))
                     && !tbl.contains_key(2).unwrap_or(true)
                 {
                     if let Ok(mut guard) = specs.try_borrow_mut() {
-                        guard.insert(DaggerSpecification {
-                            uri: force_str(tbl.get(1)?)
-                                .ok_or(Error::runtime("No URI were supplied in the mod spec."))?,
-                            tag: force_str(tbl.get("tag")?),
-                            branch: force_str(tbl.get("branch")?),
-                        });
+                        let src = {
+                            if let Ok(src) = tbl.get::<Value>("method")
+                                && let Some(src) = src.as_string().and_then(|s| s.to_str().ok())
+                            {
+                                if src == "local" || src == "Local" {
+                                    UpdateSource::Local
+                                } else {
+                                    UpdateSource::GitServices(Box::from(&*src))
+                                }
+                            } else {
+                                UpdateSource::GitHub
+                            }
+                        };
+
+                        guard.insert_owned(
+                            tbl.get::<Box<str>>(1).map_err(|_| {
+                                Error::runtime("No URI were supplied in the mod spec.")
+                            })?,
+                            DaggerSpecification {
+                                tag: tbl.get("tag")?,
+                                branch: tbl.get("branch")?,
+                                src,
+                            },
+                        );
                     };
 
                     if let Ok(val) = tbl.get("require") {
@@ -61,5 +83,11 @@ impl DaggerSpecification {
         Ok(())
     }
 
-    // pub fn get_git_url(&self) -> String {}
+    pub fn get_git_url(&self, url: &str) -> String {
+        match &self.src {
+            UpdateSource::Local => url.to_string(),
+            UpdateSource::GitServices(src) => format!("{}/{}.git", src, url),
+            UpdateSource::GitHub => format!("https://www.github.com/{}.git", url),
+        }
+    }
 }
