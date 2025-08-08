@@ -5,7 +5,6 @@
 mod directories;
 mod lua_api;
 mod models;
-mod utils;
 
 pub use directories::Directories;
 pub use lua_api::load_dagger_lua_api;
