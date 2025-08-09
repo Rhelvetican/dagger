@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git2::{build::RepoBuilder, FetchOptions, RemoteCallbacks, Repository};
+use git2::{build::RepoBuilder, DescribeOptions, FetchOptions, RemoteCallbacks, Repository};
 
 use crate::{err::DaggerError, DaggerSpecification};
 
@@ -76,7 +76,10 @@ impl DaggerModManager<'_> {
                     _ => repo.revparse_single(&format!("refs/tags/{}", tag))?,
                 }
             } else {
-                todo!()
+                let mut desc = DescribeOptions::new();
+                desc.max_candidates_tags(1).describe_tags();
+                let tag = repo.describe(&desc)?.format(None)?;
+                repo.revparse_single(&format!("refs/tags/{}", tag))?
             };
 
             repo.checkout_tree(&tag, None)?;

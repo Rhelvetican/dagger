@@ -7,7 +7,6 @@ mod macros;
 mod cli;
 mod directories;
 mod err;
-mod ext;
 mod lua_api;
 mod models;
 mod updater;
