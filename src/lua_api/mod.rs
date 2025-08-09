@@ -9,11 +9,13 @@ pub fn load_dagger_lua_api(lua: &Lua, specs: Rc<RefCell<DaggerSpecManager>>) -> 
     let api = lua.create_table()?;
 
     let add_func = lua.create_function_mut(move |_, arg: Value| {
-        DaggerSpecification::from_value(arg, Rc::clone(&specs))
+        DaggerSpecification::from_value(arg, &mut specs.borrow_mut())?;
+        Ok(())
     })?;
 
     api.set("add", &add_func)?;
     api.set("register", &add_func)?;
     global.set("Dagger", api)?;
+
     Ok(())
 }

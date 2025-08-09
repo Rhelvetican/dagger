@@ -1,0 +1,3 @@
+//! # Extensions
+
+pub trait RepositoryExt {}

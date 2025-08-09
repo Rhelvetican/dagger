@@ -11,8 +11,9 @@
     path = "src/bin/dg.rs"
 
 [dependencies]
-    clap  = { features = ["derive"], version = "4" }
-    dirs  = "6"
-    git2  = { features = ["vendored-libgit2"], version = "0.20" }
-    mlua  = { features = ["luajit", "serde"], version = "0.11" }
-    serde = { features = ["derive"], version = "1" }
+    clap      = { features = ["derive"], version = "4" }
+    dirs      = "6"
+    git2      = { features = ["vendored-libgit2"], version = "0.20" }
+    mlua      = { features = ["luajit", "serde"], version = "0.11" }
+    serde     = { features = ["derive"], version = "1" }
+    thiserror = "2"

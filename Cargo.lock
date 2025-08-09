@@ -146,6 +146,7 @@ dependencies = [
  "git2",
  "mlua",
  "serde",
+ "thiserror",
 ]
 
 [[package]]

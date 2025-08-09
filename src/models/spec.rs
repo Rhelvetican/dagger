@@ -1,4 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
 
 use mlua::{Error, Result, Value};
 
@@ -20,19 +19,17 @@ pub struct DaggerSpecification {
 }
 
 impl DaggerSpecification {
-    pub fn from_value(val: Value, specs: Rc<RefCell<DaggerSpecManager>>) -> Result<()> {
+    pub fn from_value(val: Value, specs: &mut DaggerSpecManager) -> Result<()> {
         match val {
             Value::String(s) => {
-                if let Ok(mut guard) = specs.try_borrow_mut() {
-                    guard.insert(
-                        &s.to_str()?,
-                        DaggerSpecification {
-                            tag: None,
-                            branch: None,
-                            src: UpdateSource::GitHub,
-                        },
-                    );
-                }
+                specs.insert(
+                    &s.to_str()?,
+                    DaggerSpecification {
+                        tag: None,
+                        branch: None,
+                        src: UpdateSource::GitHub,
+                    },
+                );
             }
             Value::Table(tbl) => {
                 if (tbl.contains_key("tag").unwrap_or(false)
@@ -40,39 +37,36 @@ impl DaggerSpecification {
                     || tbl.contains_key("method").unwrap_or(false))
                     && !tbl.contains_key(2).unwrap_or(true)
                 {
-                    if let Ok(mut guard) = specs.try_borrow_mut() {
-                        let src = {
-                            if let Ok(src) = tbl.get::<Value>("method")
-                                && let Some(src) = src.as_string().and_then(|s| s.to_str().ok())
-                            {
-                                if src == "local" || src == "Local" {
-                                    UpdateSource::Local
-                                } else {
-                                    UpdateSource::GitServices(Box::from(&*src))
-                                }
+                    let src = {
+                        if let Ok(src) = tbl.get::<Value>("method")
+                            && let Some(src) = src.as_string().and_then(|s| s.to_str().ok())
+                        {
+                            if src == "local" || src == "Local" {
+                                UpdateSource::Local
                             } else {
-                                UpdateSource::GitHub
+                                UpdateSource::GitServices(Box::from(&*src))
                             }
-                        };
-
-                        guard.insert_owned(
-                            tbl.get::<Box<str>>(1).map_err(|_| {
-                                Error::runtime("No URI were supplied in the mod spec.")
-                            })?,
-                            DaggerSpecification {
-                                tag: tbl.get("tag")?,
-                                branch: tbl.get("branch")?,
-                                src,
-                            },
-                        );
+                        } else {
+                            UpdateSource::GitHub
+                        }
                     };
+
+                    specs.insert_owned(
+                        tbl.get::<Box<str>>(1)
+                            .map_err(|_| Error::runtime("No URI were supplied in the mod spec."))?,
+                        DaggerSpecification {
+                            tag: tbl.get("tag")?,
+                            branch: tbl.get("branch")?,
+                            src,
+                        },
+                    );
 
                     if let Ok(val) = tbl.get("require") {
                         Self::from_value(val, specs)?;
                     };
                 } else {
                     for item in tbl.sequence_values() {
-                        Self::from_value(item?, Rc::clone(&specs))?;
+                        Self::from_value(item?, specs)?;
                     }
                 }
             }
