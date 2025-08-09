@@ -4,7 +4,7 @@
     edition     = "2024"
     keywords    = ["balatro", "manager", "mod"]
     name        = "dagger"
-    version     = "0.1.0"
+    version     = "0.0.1"
 
 [[bin]]
     name = "dg"
