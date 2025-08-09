@@ -34,30 +34,41 @@ impl DaggerModManager<'_> {
     }
 
     fn update(&self, id: &str, spec: &DaggerSpecification) -> Result<(), DaggerError> {
+        let mut callbacks = RemoteCallbacks::new();
+        let mut finished = false;
+
+        callbacks.transfer_progress(|stat| {
+            if stat.total_objects() > 0 && !finished {
+                println!(
+                    "[Git] Receiving objects: {}/{} ({} bytes).",
+                    stat.received_objects(),
+                    stat.total_objects(),
+                    stat.received_bytes()
+                );
+            }
+
+            if !finished && stat.received_objects() == stat.total_objects() {
+                finished = true;
+            }
+
+            true
+        });
+
+        let mut fetch_opts = FetchOptions::new();
+        fetch_opts.remote_callbacks(callbacks);
+
         let path = self.get_mod_path(id);
         println!("[Dagger] Updating {}...", id);
 
         let repo = match Repository::open(&path) {
-            Ok(r) => r,
+            Ok(repo) => {
+                let mut origin = repo.find_remote("origin")?;
+                origin.fetch::<&str>(&[], Some(&mut fetch_opts), None)?;
+                drop(origin);
+
+                repo
+            }
             _ => {
-                let mut callbacks = RemoteCallbacks::new();
-
-                callbacks.transfer_progress(|stat| {
-                    if stat.total_objects() > 0 {
-                        println!(
-                            "[Git] Receiving objects: {}/{} ({} bytes).",
-                            stat.received_objects(),
-                            stat.total_objects(),
-                            stat.received_bytes()
-                        );
-                    }
-
-                    true
-                });
-
-                let mut fetch_opts = FetchOptions::new();
-                fetch_opts.remote_callbacks(callbacks);
-
                 let mut repo_builder = RepoBuilder::new();
                 repo_builder.fetch_options(fetch_opts);
 

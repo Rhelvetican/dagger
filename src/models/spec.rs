@@ -1,4 +1,4 @@
-use mlua::{Error, Result, Value};
+use mlua::{Error, Result, Table, Value};
 
 use crate::DaggerSpecManager;
 
@@ -33,9 +33,12 @@ impl DaggerSpecification {
             Value::Table(tbl) => {
                 if (tbl.contains_key("tag").unwrap_or(false)
                     || tbl.contains_key("branch").unwrap_or(false)
-                    || tbl.contains_key("method").unwrap_or(false))
+                    || tbl.contains_key("method").unwrap_or(false)
+                    || tbl.contains_key("dependencies").unwrap_or(false))
                     && !tbl.contains_key(2).unwrap_or(true)
                 {
+                    dbg!(&tbl);
+
                     let src = {
                         if let Ok(src) = tbl.get::<Value>("method")
                             && let Some(src) = src.as_string().and_then(|s| s.to_str().ok())
@@ -60,8 +63,8 @@ impl DaggerSpecification {
                         },
                     );
 
-                    if let Ok(val) = tbl.get("require") {
-                        Self::from_value(val, specs)?;
+                    if let Ok(deps) = tbl.get::<Table>("dependencies") {
+                        Self::from_value(Value::Table(deps), specs)?;
                     };
                 } else {
                     for item in tbl.sequence_values() {

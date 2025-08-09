@@ -29,6 +29,8 @@ fn main() -> Result<(), DaggerError> {
         lua.load(&buf).exec()?;
     }
 
+    dbg!(&specs);
+
     let path = Directories::mod_dir();
     let updater =
         DaggerModManager::new(&path, Rc::unwrap_or_clone(specs).into_inner().into_inner());
