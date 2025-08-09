@@ -12,7 +12,7 @@ pub enum UpdateSource {
     Local,
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct DaggerSpecification {
     pub tag: Option<Box<str>>,
     pub branch: Option<Box<str>>,

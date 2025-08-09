@@ -12,3 +12,4 @@ pub use cli::*;
 pub use directories::Directories;
 pub use lua_api::load_dagger_lua_api;
 pub use models::*;
+pub use updater::*;

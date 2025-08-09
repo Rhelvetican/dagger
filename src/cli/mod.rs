@@ -1,5 +1,5 @@
 mod commands;
-use commands::Commands;
+pub use commands::Commands;
 
 use clap::Parser;
 
@@ -8,5 +8,5 @@ use clap::Parser;
 #[command(propagate_version = true)]
 pub struct CliArgs {
     #[command(subcommand)]
-    cmd: Commands,
+    pub cmd: Commands,
 }

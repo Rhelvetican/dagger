@@ -27,6 +27,11 @@ impl DaggerSpecManager {
     pub fn insert_owned(&mut self, key: Box<str>, spec: DaggerSpecification) {
         self.inner.insert(key, spec);
     }
+
+    #[inline]
+    pub fn into_inner(self) -> HashMap<Box<str>, DaggerSpecification> {
+        self.inner
+    }
 }
 
 impl Deref for DaggerSpecManager {
