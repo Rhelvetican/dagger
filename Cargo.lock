@@ -157,8 +157,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "dagger"
-version = "0.0.1"
+name = "dagger-balatro"
+version = "0.1.0-prealpha1"
 dependencies = [
  "clap",
  "dirs",

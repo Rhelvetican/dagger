@@ -8,7 +8,7 @@ use std::{
 use clap::Parser;
 use mlua::Lua;
 
-use dagger::*;
+use dagger_balatro::*;
 
 fn main() -> Result<(), DaggerError> {
     let args = CliArgs::parse();

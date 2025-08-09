@@ -3,7 +3,8 @@
     description = "A simple Balatro CLI mod manager inspired by `mini.deps`. Focuses on `lovely` and `smods` mods."
     edition     = "2024"
     keywords    = ["balatro", "manager", "mod"]
-    name        = "dagger"
+    license     = "MIT"
+    name        = "dagger-balatro"
     version     = "0.1.0-prealpha1"
 
 [[bin]]
