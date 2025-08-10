@@ -118,6 +118,10 @@ impl DaggerModManager<'_> {
             println!("[Git] Checking out to {}.", tag.id());
             repo.checkout_tree(&tag, Some(&mut checkout_opts))?;
         } else {
+            println!(
+                "[Git] Checking out to {}.",
+                repo.head()?.peel_to_commit()?.id()
+            );
             repo.checkout_head(Some(&mut checkout_opts))?;
         }
 
