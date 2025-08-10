@@ -1,3 +1,4 @@
+mod lock;
 mod spec;
 mod spec_manager;
 

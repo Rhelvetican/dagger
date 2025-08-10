@@ -8,6 +8,8 @@ pub enum DaggerError {
     GitError(#[from] git2::Error),
     #[error("[IO] {}", .0)]
     IoError(#[from] std::io::Error),
+    #[error("[Serde/JSON] {}", .0)]
+    JsonError(#[from] serde_json::Error),
     #[error("[Other] {}", .0)]
     Other(String),
 }
