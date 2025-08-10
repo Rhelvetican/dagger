@@ -84,6 +84,15 @@ impl DaggerModManager<'_> {
             }
         };
 
+        let mut checkout_opts = CheckoutBuilder::new();
+
+        checkout_opts
+            .force()
+            .recreate_missing(true)
+            .remove_untracked(true)
+            .use_ours(false)
+            .use_theirs(true);
+
         if let Some(tag) = &spec.tag {
             let tag = match &**tag {
                 "*" => {
@@ -106,18 +115,10 @@ impl DaggerModManager<'_> {
                 }
             };
 
-            let mut checkout_opts = CheckoutBuilder::new();
-
-            checkout_opts
-                .force()
-                .recreate_missing(true)
-                .remove_untracked(true)
-                .use_ours(false)
-                .use_theirs(true);
-
             println!("[Git] Checking out to {}.", tag.id());
-
-            repo.checkout_tree(&tag, None)?;
+            repo.checkout_tree(&tag, Some(&mut checkout_opts))?;
+        } else {
+            repo.checkout_head(Some(&mut checkout_opts))?;
         }
 
         Ok(())
