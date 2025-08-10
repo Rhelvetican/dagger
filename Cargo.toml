@@ -5,7 +5,7 @@
     keywords    = ["balatro", "manager", "mod"]
     license     = "MIT"
     name        = "dagger-balatro"
-    version     = "0.1.0-prealpha1"
+    version     = "0.1.0-prealpha2"
 
 [[bin]]
     name = "dg"

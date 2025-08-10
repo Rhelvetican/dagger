@@ -3,7 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git2::{build::RepoBuilder, DescribeOptions, FetchOptions, RemoteCallbacks, Repository};
+use git2::{
+    build::{CheckoutBuilder, RepoBuilder},
+    DescribeOptions, FetchOptions, RemoteCallbacks, Repository,
+};
 
 use crate::{err::DaggerError, DaggerSpecification};
 
@@ -59,6 +62,7 @@ impl DaggerModManager<'_> {
 
         let path = self.get_mod_path(id);
         println!("[Dagger] Updating {}...", id);
+        println!("[Git] Fetching update from {}.", spec.get_git_url(id));
 
         let repo = match Repository::open(&path) {
             Ok(repo) => {
@@ -81,20 +85,39 @@ impl DaggerModManager<'_> {
         };
 
         if let Some(tag) = &spec.tag {
-            let tag = if &**tag != "*" {
-                match repo.revparse_single(&format!("refs/tags/v{}", tag)) {
-                    Ok(tag) => tag,
-                    _ => repo.revparse_single(&format!("refs/tags/{}", tag))?,
+            let tag = match &**tag {
+                "*" => {
+                    let mut desc = DescribeOptions::new();
+                    desc.max_candidates_tags(1).describe_tags();
+                    let tag = repo.describe(&desc)?.format(None)?;
+                    repo.revparse_single(&format!("refs/tags/{}", tag))?
                 }
-            } else {
-                let mut desc = DescribeOptions::new();
-                desc.max_candidates_tags(1).describe_tags();
-                let tag = repo.describe(&desc)?.format(None)?;
-                repo.revparse_single(&format!("refs/tags/{}", tag))?
+                tag => {
+                    match repo.revparse_single(&format!("refs/tags/v{}", tag)) {
+                        Ok(tag) => tag,
+                        _ => match repo.revparse_single(&format!("refs/tags/{}", tag)) {
+                            Ok(tag) => tag,
+                            _ => {
+                                println!("[Dagger] No such tag were found. Skipping checking out to tag.");
+                                return Ok(());
+                            }
+                        },
+                    }
+                }
             };
 
+            let mut checkout_opts = CheckoutBuilder::new();
+
+            checkout_opts
+                .force()
+                .recreate_missing(true)
+                .remove_untracked(true)
+                .use_ours(false)
+                .use_theirs(true);
+
+            println!("[Git] Checking out to {}.", tag.id());
+
             repo.checkout_tree(&tag, None)?;
-            return Ok(());
         }
 
         Ok(())

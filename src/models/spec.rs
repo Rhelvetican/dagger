@@ -37,8 +37,6 @@ impl DaggerSpecification {
                     || tbl.contains_key("dependencies").unwrap_or(false))
                     && !tbl.contains_key(2).unwrap_or(true)
                 {
-                    dbg!(&tbl);
-
                     let src = {
                         if let Ok(src) = tbl.get::<Value>("method")
                             && let Some(src) = src.as_string().and_then(|s| s.to_str().ok())
