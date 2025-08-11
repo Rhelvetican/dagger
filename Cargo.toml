@@ -5,7 +5,7 @@
     keywords    = ["balatro", "manager", "mod"]
     license     = "MIT"
     name        = "dagger-balatro"
-    version     = "0.1.0-prealpha2"
+    version     = "0.1.0-prealpha3"
 
 [[bin]]
     name = "dg"
@@ -14,8 +14,6 @@
 [dependencies]
     clap       = { features = ["derive"], version = "4" }
     dirs       = "6"
-    git2       = { features = ["vendored-libgit2"], version = "0.20" }
-    indicatif  = "0.18"
     mlua       = { features = ["luajit", "serde"], version = "0.11" }
     serde      = { features = ["derive"], version = "1" }
     serde_json = "1"
