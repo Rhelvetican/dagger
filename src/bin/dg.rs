@@ -1,4 +1,4 @@
-use dagger_balatro::err::DaggerError;
+use dagger::error::DaggerError;
 use mimalloc_rust::*;
 
 #[global_allocator]

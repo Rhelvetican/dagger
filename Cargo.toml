@@ -1,11 +1,11 @@
 [package]
     authors     = ["Rhelvetican"]
-    description = "A simple Balatro CLI mod manager. Focuses on `lovely` and `smods` mods."
+    description = "A simple Balatro CLI mod manager."
     edition     = "2024"
     keywords    = ["balatro", "manager", "mod"]
     license     = "MIT"
-    name        = "dagger-balatro"
-    version     = "0.1.0-prealpha3"
+    name        = "dagger"
+    version     = "0.2.0"
 
 [[bin]]
     name = "dg"
