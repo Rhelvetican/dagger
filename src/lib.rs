@@ -1,15 +1,4 @@
-//! # Dagger
-//!
-//! The Balatro mod manager API.
-
-mod dir;
-mod error;
-mod ext;
-mod git;
-mod lua;
-mod specification;
-
-pub mod cli;
-
-type BoxedStr = Box<str>;
-pub use error::*;
+pub mod core;
+pub mod err;
+pub mod lua;
+pub mod path;
