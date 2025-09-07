@@ -1,20 +1,20 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-struct SmodsMetadata<'a> {
-    author: Vec<&'a str>,
-    badge_colour: Option<&'a str>,
-    badge_text_colour: Option<&'a str>,
-    conflicts: Vec<&'a str>,
-    dependencies: Vec<&'a str>,
-    description: &'a str,
-    display_name: Option<&'a str>,
+pub struct SmodsMetadata {
+    author: Vec<String>,
+    badge_colour: Option<String>,
+    badge_text_colour: Option<String>,
+    conflicts: Vec<String>,
+    dependencies: Vec<String>,
+    description: String,
+    display_name: Option<String>,
     dump_loc: bool,
-    id: &'a str,
-    main_file: &'a str,
-    name: &'a str,
-    prefix: &'a str,
+    id: String,
+    main_file: String,
+    name: String,
+    prefix: String,
     priority: Option<i64>,
-    provides: Vec<&'a str>,
-    version: &'a str,
+    provides: Vec<String>,
+    version: String,
 }

@@ -1,14 +1,16 @@
 use std::{
     collections::HashMap,
+    fs::File,
+    io::BufReader,
     ops::{Deref, DerefMut},
     path::Path,
     str::FromStr,
 };
 
-use git2::Repository;
-use mlua::{Error, Value};
+use serde_json::from_reader;
+use url::Url;
 
-use crate::err::DaggerError;
+use crate::{core::metadata::SmodsMetadata, err::DaggerError};
 
 #[derive(Debug, Clone, Default)]
 pub enum ModSourceType {
@@ -21,11 +23,19 @@ pub enum ModSourceType {
 }
 
 #[derive(Debug, Clone, Default)]
+pub enum GitRef {
+    Commit(String),
+    Tag(String),
+    #[default]
+    Latest,
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct ModSpec {
-    src_ty: ModSourceType,
+    pub src_ty: ModSourceType,
     branch: Option<String>,
-    commit: Option<String>,
-    directory: Option<String>,
+    objref: Option<GitRef>,
+    pub directory: String,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -59,48 +69,61 @@ impl FromStr for ModSpec {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mod_path = AsRef::<Path>::as_ref(s);
         if mod_path.is_dir()
-            && let Some(mod_name) = mod_path.components().last()
-            && mod_path
-                .join(format!("{}.json", mod_name.as_os_str().display()))
-                .is_file()
+            && let Some(name) = mod_path
+                .components()
+                .next_back()
+                .map(|s| s.as_os_str().to_string_lossy().into_owned())
         {
-            return Ok(Self {
-                src_ty: ModSourceType::Local,
-                directory: mod_name.as_os_str().to_str().map(|s| s.to_owned()),
-                ..Default::default()
-            });
-        }
+            let x = mod_path.join(format!("{}.json", name));
 
-        if s.split('/').count() == 2 {
-            return Ok(Self {
+            if File::open(&x)
+                .map(BufReader::new)
+                .map_err(DaggerError::from)
+                .and_then(|rdr| from_reader::<_, SmodsMetadata>(rdr).map_err(DaggerError::from))
+                .is_ok()
+            {
+                return Ok(Self {
+                    src_ty: ModSourceType::Local,
+                    directory: name,
+                    ..Default::default()
+                });
+            };
+        };
+
+        if let Some((i, dir)) = s.split('/').enumerate().last()
+            && i == 2
+            && !dir.is_empty()
+        {
+            Ok(Self {
                 src_ty: ModSourceType::Github,
+                directory: dir.to_string(),
                 ..Default::default()
-            });
+            })
+        } else if let Ok(url) = Url::parse(s) {
+            Ok(Self {
+                src_ty: ModSourceType::GitService {
+                    fmt: format!("{}://{}/%s", url.scheme(), url.domain().unwrap_or("")),
+                },
+                directory: url
+                    .path_segments()
+                    .and_then(|s| s.filter(|s| !s.is_empty()).next_back().map(str::to_string))
+                    .unwrap_or_default(),
+                ..Default::default()
+            })
+        } else {
+            Err(DaggerError::runtime("Invalid URL were supplied."))
         }
     }
 }
 
 impl ModSpec {
-    pub fn from_lua_single(lua_value: Value) -> Result<Self, DaggerError> {
-        match lua_value {
-            Value::String(s) => s.to_string_lossy().parse(),
-            Value::Table(tbl) => {
-                let src_ty = tbl
-                    .get::<String>("source")
-                    .ok()
-                    .and_then(|s| match &*(s.to_lowercase()) {
-                        "local" => Some(ModSourceType::Local),
-                        "github" => Some(ModSourceType::Github),
-                        _ => Some(ModSourceType::GitService { fmt: s }),
-                    })
-                    .unwrap_or(ModSourceType::Github);
+    #[inline]
+    pub fn objref(&self) -> Option<&GitRef> {
+        self.objref.as_ref()
+    }
 
-                let branch = tbl.get("branch");
-            }
-
-            _ => Err(DaggerError::Lua(Error::runtime(
-                "Invalid config were supplied.",
-            ))),
-        }
+    #[inline]
+    pub fn branch(&self) -> Option<&str> {
+        self.branch.as_deref()
     }
 }
