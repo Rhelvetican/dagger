@@ -6,8 +6,8 @@ pub enum DaggerError {
     Io(#[from] std::io::Error),
     #[error("[Dagger/JSON]: Error: {}", .0)]
     Json(#[from] serde_json::Error),
-    #[error("[Dagger/Lua]: Error: {}", .0)]
-    Lua(#[from] mlua::Error),
+    #[error("[Dagger/TOML]: Error: {}", .0)]
+    Toml(#[from] toml::Error),
     #[error("[Dagger/Runtime]: Error: {}",.0)]
     Runtime(String),
 }
