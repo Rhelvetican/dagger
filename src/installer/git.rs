@@ -1,4 +1,4 @@
-use std::fs::{remove_dir, remove_file};
+use std::fs::{remove_dir_all, remove_file};
 
 use git2::{
     AutotagOption, Error as GitError, FetchOptions, ObjectType, RemoteCallbacks,
@@ -35,23 +35,27 @@ impl GitManager {
 
         if args.tag.is_some() {
             fetch_opts.download_tags(AutotagOption::All);
-            repo.bare(true);
+        } else {
+            fetch_opts.download_tags(AutotagOption::None);
         }
 
         let install_path = PathImpl::balatro_mod_dir().join(id);
 
         if install_path.try_exists().is_ok_and(|b| b) {
-            println!("The install path already exists, removing...");
-
-            if remove_dir(&install_path).is_err() || remove_file(&install_path).is_err() {
-                println!("Failed to remove existing file/directory at install location.");
-            }
+            let _ = remove_dir_all(&install_path);
+            let _ = remove_file(&install_path);
         }
 
+        repo.fetch_options(fetch_opts);
         let repo = repo.clone(&args.url, &install_path)?;
 
         if let Some(tag) = args.tag.as_deref() {
-            let refer = repo.find_reference(&format!("refs/tags/{}", tag))?;
+            let refer;
+            if let Ok(reference) = repo.find_reference(&format!("refs/tags/{}", tag)) {
+                refer = reference;
+            } else {
+                refer = repo.find_reference(&format!("refs/tags/v{}", tag))?
+            };
 
             let commit_obj = refer.peel(ObjectType::Commit)?;
 

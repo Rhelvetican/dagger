@@ -43,7 +43,8 @@ impl<'a> TransferProgress<'a> {
                     "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
                 )
                 .unwrap_or(ProgressStyle::default_bar())
-                .tick_chars("#>-");
+                .tick_chars("⡿⣟⣯⣷⣾⣽⣻⢿")
+                .progress_chars("#>-");
             self.spinner.set_style(style);
             self.spinner.set_length(total);
             self.total = total;

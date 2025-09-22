@@ -30,8 +30,18 @@ pub struct InstallCommandArgs {
 pub struct UpdateCommandArgs {
     #[arg(short, long, default_value_t = false)]
     pub all: bool,
+    #[command(flatten)]
+    pub item: Option<UpdateItem>,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct UpdateItem {
     #[arg(short, long)]
-    pub item: Option<String>,
+    id: String,
+    #[arg(short, long)]
+    branch: Option<String>,
+    #[arg(short, long)]
+    tag: Option<String>,
 }
 
 impl InstallCommandArgs {

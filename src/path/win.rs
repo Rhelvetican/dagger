@@ -1,16 +1,26 @@
-use crate::path::{DaggerPathApi, PathImpl};
-use constcat::concat as constcat;
+use std::{
+    env::var,
+    path::{Path, PathBuf},
+};
 
-const APP_DATA_ROAMING: &str = env!("AppData");
+use crate::path::{DaggerPathApi, PathImpl};
 
 impl DaggerPathApi for PathImpl {
     #[inline]
-    fn config_dir() -> &'static str {
-        constcat!(APP_DATA_ROAMING, "/Dagger")
+    fn config_dir() -> PathBuf {
+        var("AppData")
+            .as_deref()
+            .map(Path::new)
+            .map(|p| p.join("Dagger"))
+            .unwrap()
     }
 
     #[inline]
-    fn balatro_dir() -> &'static str {
-        constcat!(APP_DATA_ROAMING, "/Balatro")
+    fn balatro_dir() -> PathBuf {
+        var("AppData")
+            .as_deref()
+            .map(Path::new)
+            .map(|p| p.join("Balatro"))
+            .unwrap()
     }
 }

@@ -21,10 +21,12 @@ impl DaggerModManager {
     pub fn install(&mut self, mut args: InstallCommandArgs) -> DagRes<()> {
         let (branch, commit) = self.git.install(&mut args)?;
 
-        let entr = self.lock_files.insert(
+        self.lock_files.insert(
             args.get_id().to_string(),
             DaggerLockfileEntry::new(branch, commit),
         );
+
+        self.lock_files.save()?;
 
         Ok(())
     }

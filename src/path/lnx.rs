@@ -1,4 +1,7 @@
-use std::{ffi::OsStr, path::Path};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use crate::path::{DaggerPathApi, PathImpl};
 
@@ -12,8 +15,8 @@ const STEAMDECK_BALATRO_DIR: &str = "~/.steam/steam/steamapps/compatdata/2379780
 
 impl DaggerPathApi for PathImpl {
     #[inline]
-    fn balatro_dir() -> &'static str {
-        if is_dir(SNAP_BALATRO_DIR) {
+    fn balatro_dir() -> PathBuf {
+        PathBuf::from(if is_dir(SNAP_BALATRO_DIR) {
             SNAP_BALATRO_DIR
         } else if is_dir(FLATPAK_BALATRO_DIR) {
             FLATPAK_BALATRO_DIR
@@ -21,10 +24,10 @@ impl DaggerPathApi for PathImpl {
             STEAMDECK_BALATRO_DIR
         } else {
             "~/Balatro/"
-        }
+        })
     }
 
-    fn config_dir() -> &'static str {
-        "~/.config/dagger"
+    fn config_dir() -> PathBuf {
+        PathBuf::from("~/.config/dagger")
     }
 }
