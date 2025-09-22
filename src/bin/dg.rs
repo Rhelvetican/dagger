@@ -1,9 +1,8 @@
-use dagger::error::DaggerError;
-use mimalloc_rust::*;
+use std::{env::var, fs::read_dir, path::Path};
 
-#[global_allocator]
-static GLOBAL_MIMALLOC: GlobalMiMalloc = GlobalMiMalloc;
+use clap::Parser;
+use dagger::Cli;
 
-fn main() -> Result<(), DaggerError> {
-    Ok(())
+fn main() {
+    let _ = Cli::parse();
 }
