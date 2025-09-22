@@ -32,6 +32,14 @@ impl DaggerLockfileEntry {
     pub fn new(branch: String, commit: String) -> Self {
         Self { branch, commit }
     }
+
+    pub fn set_branch(&mut self, branch: String) {
+        self.branch = branch;
+    }
+
+    pub fn set_commit(&mut self, commit: String) {
+        self.commit = commit;
+    }
 }
 
 impl DaggerLockfile {
