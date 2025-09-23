@@ -6,7 +6,10 @@ use git2::{
     build::{CheckoutBuilder, RepoBuilder},
 };
 
-use crate::{DagRes, DaggerPathApi, PathImpl, installer::api::InstallableMod};
+use crate::{
+    DagRes, DaggerPathApi, PathImpl,
+    installer::api::{GitCallback, InstallableMod, UpgradableMod},
+};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct GitManager;
@@ -53,37 +56,39 @@ impl GitManager {
             .collect())
     }
 
-    pub fn install<I: InstallableMod>(&self, args: &I) -> DagRes<(String, String)> {
+    pub fn install<I, Cb>(&self, args: &I, callback: Option<&mut Cb>) -> DagRes<(String, String)>
+    where
+        I: InstallableMod,
+        Cb: GitCallback,
+    {
         let id = &*args
             .get_id()
-            .unwrap_or(
+            .unwrap_or_else(|| {
                 args.get_url()
                     .split("/")
                     .last()
                     .map(|s| s.trim_end_matches(".git"))
-                    .unwrap_or_default(),
-            )
+                    .unwrap_or_default()
+            })
             .to_string()
             .into_boxed_str();
 
-        let mut spinner = TransferProgress::new(TransferProgress::construct_spinner(&format!(
-            "Installing {}...\r\n",
-            id
-        )));
-
         let mut remote_callbacks = RemoteCallbacks::new();
-        remote_callbacks.transfer_progress(|prog| spinner.update(prog));
+
+        if let Some(cb) = callback {
+            remote_callbacks.transfer_progress(|pg| cb.callback(pg));
+        }
 
         let mut fetch_opts = FetchOptions::new();
         fetch_opts.depth(1).remote_callbacks(remote_callbacks);
 
         let mut repo = RepoBuilder::new();
 
-        if let Some(branch) = args.branch.as_deref() {
+        if let Some(branch) = args.get_branch() {
             repo.branch(branch);
         }
 
-        if args.tag.is_some() {
+        if args.get_tag().is_some() {
             fetch_opts.download_tags(AutotagOption::All);
         } else {
             fetch_opts.download_tags(AutotagOption::None);
@@ -97,9 +102,9 @@ impl GitManager {
         }
 
         repo.fetch_options(fetch_opts);
-        let repo = repo.clone(&args.url(), &install_path)?;
+        let repo = repo.clone(args.get_url(), &install_path)?;
 
-        if let Some(tag) = args.tag.as_deref() {
+        if let Some(tag) = args.get_tag() {
             let refer;
 
             if tag == "*" {
@@ -130,14 +135,19 @@ impl GitManager {
         ))
     }
 
-    pub fn update_with_id(&self, id: &str) -> DagRes<(String, String)> {
-        let mut spinner = TransferProgress::new(TransferProgress::construct_spinner(&format!(
-            "Updating {}...\r\n",
-            id
-        )));
-
+    pub fn update_with_id<Cb>(
+        &self,
+        id: &str,
+        callback: Option<&mut Cb>,
+    ) -> DagRes<(String, String)>
+    where
+        Cb: GitCallback,
+    {
         let mut remote_callbacks = RemoteCallbacks::new();
-        remote_callbacks.transfer_progress(|prog| spinner.update(prog));
+
+        if let Some(cb) = callback {
+            remote_callbacks.transfer_progress(|pg| cb.callback(pg));
+        }
 
         let mut fetch_opts = FetchOptions::new();
         fetch_opts
@@ -159,34 +169,35 @@ impl GitManager {
         ))
     }
 
-    pub fn update(&self, args: &UpdateItem) -> DagRes<(String, String)> {
-        let mut spinner = TransferProgress::new(TransferProgress::construct_spinner(&format!(
-            "Updating {}...\r\n",
-            &args.id
-        )));
-
+    pub fn update<U, Cb>(&self, args: &U, callback: Option<&mut Cb>) -> DagRes<(String, String)>
+    where
+        U: UpgradableMod,
+        Cb: GitCallback,
+    {
         let mut remote_callbacks = RemoteCallbacks::new();
-        remote_callbacks.transfer_progress(|prog| spinner.update(prog));
+        if let Some(cb) = callback {
+            remote_callbacks.transfer_progress(|pg| cb.callback(pg));
+        }
 
         let mut fetch_opts = FetchOptions::new();
         fetch_opts.depth(1).remote_callbacks(remote_callbacks);
 
-        let install_path = PathImpl::balatro_mod_dir().join(&args.id);
+        let install_path = PathImpl::balatro_mod_dir().join(args.get_id());
         let repo = Repository::open(&install_path)?;
 
-        if args.tag.is_some() {
+        if args.get_tag().is_some() {
             fetch_opts.download_tags(AutotagOption::All);
         }
 
         let mut remote = repo.find_remote("origin")?;
 
-        if let Some(branch) = args.branch.as_deref() {
+        if let Some(branch) = args.get_branch() {
             remote.fetch(&[branch], Some(&mut fetch_opts), None)?;
         } else {
             remote.fetch::<&str>(&[], Some(&mut fetch_opts), None)?;
         }
 
-        if let Some(tag) = args.tag.as_deref() {
+        if let Some(tag) = args.get_tag() {
             let refer;
 
             if tag == "*" {

@@ -1,3 +1,5 @@
+use git2::Progress;
+
 /// Shared behaviours of an installable Dagger mod.
 pub trait InstallableMod {
     /// Get the URL to install from.
@@ -28,6 +30,6 @@ pub trait ListableMod {
     fn list_tags(&self) -> bool;
 }
 
-pub trait GitCallback {
-    fn 
+pub trait GitCallback {
+    fn callback(&mut self, progress: Progress<'_>) -> bool;
 }
