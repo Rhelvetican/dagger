@@ -26,6 +26,7 @@ impl DaggerPathApi for PathImpl {
             .into_iter()
             .copied()
             .map(|s| home.join(s))
+            .inspect(|s| dbg!(s))
             .find(|s| is_dir(s))
             .unwrap_or(home.join("Balatro"))
     }
