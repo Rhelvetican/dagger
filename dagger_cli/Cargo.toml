@@ -1,0 +1,18 @@
+[package]
+    name = "dagger_cli"
+
+    description.workspace = true
+    edition.workspace     = true
+    keywords.workspace    = true
+    license.workspace     = true
+    version.workspace     = true
+
+[[bin]]
+    name = "dg"
+    src  = "src/main.rs"
+
+[dependencies]
+    dagger_lib = { path = "../dagger_lib/" }
+
+    clap      = { features = ["derive"], version = "4" }
+    indicatif = "0.18"

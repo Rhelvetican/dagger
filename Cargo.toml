@@ -1,21 +1,11 @@
-[package]
-    authors     = ["Rhelvetican"]
-    description = "A simple Balatro CLI mod manager. Powered by Git."
-    edition     = "2024"
-    keywords    = ["balatro", "manager", "mod", "mod_manager"]
-    license     = "MIT"
-    name        = "dagger"
-    version     = "0.2.0"
+[workspace]
+    members  = ["dagger_cli/", "dagger_lib/"]
+    resolver = "3"
 
-[[bin]]
-    name = "dg"
-    path = "src/bin/dg.rs"
-
-[dependencies]
-    clap  = { features = ["derive"], version = "4" }
-    git2  = { features = ["https"], version = "0.20" }
-    serde = { features = ["derive"], version = "1" }
-    toml  = "0.9"
-
-    indicatif = "0.18"
-    thiserror = "2"
+    [workspace.package]
+        authors     = ["Alvin Dong", "Rhelvetican <bionicvnb@gmail.com>"]
+        description = "A simple Balatro CLI mod manager. Powered by Git."
+        edition     = "2024"
+        keywords    = ["balatro", "manager", "mod", "mod_manager"]
+        license     = "MIT"
+        version     = "0.2.0"
