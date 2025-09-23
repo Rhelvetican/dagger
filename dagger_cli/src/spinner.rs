@@ -1,7 +1,6 @@
-use std::{marker::PhantomData, num::NonZeroUsize};
-
-use git2::Progress;
+use dagger_lib::{GitCallback, Progress};
 use indicatif::{ProgressBar, ProgressStyle};
+use std::{marker::PhantomData, num::NonZeroUsize};
 
 #[derive(Debug, Clone)]
 pub struct TransferProgress<'a> {
@@ -33,8 +32,10 @@ impl<'a> TransferProgress<'a> {
             __data: PhantomData,
         }
     }
+}
 
-    pub fn update(&mut self, progress: Progress<'_>) -> bool {
+impl GitCallback for TransferProgress<'_> {
+    fn callback(&mut self, progress: Progress<'_>) -> bool {
         if self.total == 0
             && let Some(total) = NonZeroUsize::new(progress.total_objects()).map(|n| n.get() as u64)
         {

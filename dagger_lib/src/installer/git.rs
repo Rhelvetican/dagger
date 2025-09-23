@@ -61,17 +61,7 @@ impl GitManager {
         I: InstallableMod,
         Cb: GitCallback,
     {
-        let id = &*args
-            .get_id()
-            .unwrap_or_else(|| {
-                args.get_url()
-                    .split("/")
-                    .last()
-                    .map(|s| s.trim_end_matches(".git"))
-                    .unwrap_or_default()
-            })
-            .to_string()
-            .into_boxed_str();
+        let id = &*args.get_id().to_string().into_boxed_str();
 
         let mut remote_callbacks = RemoteCallbacks::new();
 
@@ -84,7 +74,7 @@ impl GitManager {
 
         let mut repo = RepoBuilder::new();
 
-        if let Some(branch) = args.get_branch() {
+        if let Some(ref branch) = args.get_branch() {
             repo.branch(branch);
         }
 
@@ -102,12 +92,12 @@ impl GitManager {
         }
 
         repo.fetch_options(fetch_opts);
-        let repo = repo.clone(args.get_url(), &install_path)?;
+        let repo = repo.clone(&args.get_url(), &install_path)?;
 
         if let Some(tag) = args.get_tag() {
             let refer;
 
-            if tag == "*" {
+            if (tag) == "*" {
                 refer = self.get_latest_tag(&repo)?;
             } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/v{}", tag)) {
                 refer = reference;
@@ -182,7 +172,7 @@ impl GitManager {
         let mut fetch_opts = FetchOptions::new();
         fetch_opts.depth(1).remote_callbacks(remote_callbacks);
 
-        let install_path = PathImpl::balatro_mod_dir().join(args.get_id());
+        let install_path = PathImpl::balatro_mod_dir().join(&*args.get_id());
         let repo = Repository::open(&install_path)?;
 
         if args.get_tag().is_some() {
@@ -192,7 +182,7 @@ impl GitManager {
         let mut remote = repo.find_remote("origin")?;
 
         if let Some(branch) = args.get_branch() {
-            remote.fetch(&[branch], Some(&mut fetch_opts), None)?;
+            remote.fetch(&[&*branch], Some(&mut fetch_opts), None)?;
         } else {
             remote.fetch::<&str>(&[], Some(&mut fetch_opts), None)?;
         }
@@ -200,7 +190,7 @@ impl GitManager {
         if let Some(tag) = args.get_tag() {
             let refer;
 
-            if tag == "*" {
+            if (tag) == "*" {
                 refer = self.get_latest_tag(&repo)?;
             } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/v{}", tag)) {
                 refer = reference;

@@ -29,15 +29,7 @@ impl DaggerModManager {
         let (branch, commit) = self.git.install(&args, cb)?;
 
         self.lock_files.insert(
-            args.get_id()
-                .unwrap_or_else(|| {
-                    args.get_url()
-                        .split("/")
-                        .last()
-                        .map(|s| s.trim_end_matches(".git"))
-                        .unwrap_or_default()
-                })
-                .to_string(),
+            args.get_id().to_string(),
             DaggerLockfileEntry::new(branch, commit),
         );
 
@@ -50,15 +42,15 @@ impl DaggerModManager {
     where
         L: ListableMod,
     {
-        let Some(item) = self.lock_files.get(args.get_id()) else {
+        let Some(item) = args.get_id().and_then(|s| self.lock_files.get(&*s)) else {
             return Err(DaggerError::runtime("No such mod found."));
         };
 
-        println!("{} => {}", args.get_id(), item);
+        println!("{} => {}", args.get_id().unwrap(), item);
 
         if args.list_tags() {
             self.git
-                .list_tags(args.get_id())?
+                .list_tags(&args.get_id().unwrap())?
                 .iter()
                 .for_each(|tag| println!("\t{}", tag));
         }
@@ -89,7 +81,7 @@ impl DaggerModManager {
         let (branch, commit) = self.git.update(&args, cb)?;
         let entr = self
             .lock_files
-            .get_mut(args.get_id())
+            .get_mut(&*args.get_id())
             .ok_or(DaggerError::runtime("No such mod is found."))?;
 
         entr.set_branch(branch);
@@ -98,12 +90,13 @@ impl DaggerModManager {
         Ok(())
     }
 
-    pub fn update_all<Cb>(&mut self, cb: Option<Cb>) -> DagRes<()>
+    pub fn update_all<'a, CbCon, Cb>(&'a mut self, mut cb: Option<CbCon>) -> DagRes<()>
     where
-        Cb: Clone + GitCallback,
+        Cb: GitCallback,
+        CbCon: Fn(&'a str) -> Cb,
     {
         for (id, entr) in self.lock_files.iter_mut() {
-            let mut cbref = cb.clone();
+            let mut cbref = cb.as_mut().map(|s| s(id));
             let (branch, commit) = self.git.update_with_id(id, cbref.as_mut())?;
 
             entr.set_branch(branch);
