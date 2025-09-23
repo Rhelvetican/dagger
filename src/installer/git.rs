@@ -7,7 +7,7 @@ use git2::{
 };
 
 use crate::{
-    DagRes, DaggerPathApi, InstallCommandArgs, PathImpl, UpdateCommandArgs, cli::UpdateItem,
+    DagRes, DaggerPathApi, InstallCommandArgs, PathImpl, cli::UpdateItem,
     utils::spinner::TransferProgress,
 };
 
