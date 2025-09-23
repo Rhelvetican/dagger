@@ -40,7 +40,7 @@ impl<'a> TransferProgress<'a> {
         {
             let style = ProgressStyle::default_bar()
                 .template(
-                    "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
+                    "{spinner:.green} {msg} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
                 )
                 .unwrap_or(ProgressStyle::default_bar())
                 .tick_chars("⡿⣟⣯⣷⣾⣽⣻⢿")
@@ -52,13 +52,6 @@ impl<'a> TransferProgress<'a> {
 
         if self.total != 0 {
             self.spinner.set_position(progress.received_objects() as _);
-            self.spinner.set_message(format!(
-                "Receiving objects: {}/{} (Deltas: {}/{})",
-                progress.received_objects(),
-                self.total,
-                progress.indexed_deltas(),
-                progress.total_deltas()
-            ));
         }
 
         self.total != 0
