@@ -16,7 +16,6 @@ pub enum Commands {
 
 #[derive(Debug, Clone, Args)]
 pub struct InstallCommandArgs {
-    #[arg(short, long)]
     pub url: String,
     #[arg(long)]
     pub id: Option<String>,
@@ -55,7 +54,6 @@ impl UpdateCommands {
 
 #[derive(Debug, Clone, Args)]
 pub struct UpdateItem {
-    #[arg(short, long)]
     pub id: String,
     #[arg(short, long)]
     pub branch: Option<String>,
@@ -115,7 +113,6 @@ impl ListCommands {
 
 #[derive(Debug, Clone, Args)]
 pub struct ListArgs {
-    #[arg(short, long)]
     id: String,
 }
 
