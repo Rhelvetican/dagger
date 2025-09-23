@@ -90,7 +90,7 @@ impl GitManager {
         }
 
         repo.fetch_options(fetch_opts);
-        let repo = repo.clone(&args.url, &install_path)?;
+        let repo = repo.clone(&args.url(), &install_path)?;
 
         if let Some(tag) = args.tag.as_deref() {
             let refer;

@@ -9,14 +9,18 @@ pub struct Cli {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
+    /// Install a Balatro mod.
     Install(InstallCommandArgs),
+    /// Update Balatro mods.
     Update(UpdateCommandArgs),
+    /// List installed Balatro mods.
     List(ListCommandArgs),
 }
 
 #[derive(Debug, Clone, Args)]
 pub struct InstallCommandArgs {
-    pub url: String,
+    /// Url to the mod repository.
+    url: String,
     #[arg(long)]
     pub id: Option<String>,
     #[arg(short, long)]
@@ -79,6 +83,17 @@ impl InstallCommandArgs {
         } else {
             unreachable!()
         }
+    }
+
+    pub fn url(&self) -> String {
+        if self.url.starts_with("https://") || self.url.starts_with("http://") {
+            return self.url.clone();
+        }
+
+        format!(
+            "https://www.github.com/{}.git",
+            self.url.as_str().trim_end_matches(".git")
+        )
     }
 }
 
