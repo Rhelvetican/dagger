@@ -1,5 +1,5 @@
 use crate::{
-    DagRes, DaggerError, DaggerLockfile, DaggerLockfileEntry,
+    DagRes, DaggerError, DaggerLockfile, DaggerLockfileEntry, DaggerPathApi, PathImpl,
     installer::{
         api::{GitCallback, InstallableMod, ListableMod, UpgradableMod},
         git::GitManager,
@@ -21,6 +21,13 @@ impl DaggerModManager {
         }
     }
 
+    #[inline]
+    pub fn refresh(&mut self) -> DagRes<()> {
+        self.lock_files
+            .retain(|s, _| PathImpl::balatro_mod_dir().join(s).is_dir());
+        Ok(())
+    }
+
     pub fn install<I, Cb>(&mut self, args: I, cb: Option<&mut Cb>) -> DagRes<()>
     where
         I: InstallableMod,
@@ -32,8 +39,6 @@ impl DaggerModManager {
             args.get_id().to_string(),
             DaggerLockfileEntry::new(branch, commit),
         );
-
-        self.lock_files.save()?;
 
         Ok(())
     }
@@ -104,5 +109,10 @@ impl DaggerModManager {
         }
 
         Ok(())
+    }
+
+    #[inline]
+    pub fn save_lock_file(&self) -> DagRes<()> {
+        self.lock_files.save()
     }
 }

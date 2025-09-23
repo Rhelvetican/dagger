@@ -15,11 +15,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut manager = DaggerModManager::new(DaggerLockfile::load().unwrap_or_default());
     let cli = Cli::parse();
 
+    manager.refresh()?;
+
     match cli.cmd {
         Commands::Install(i) => install(&mut manager, i)?,
         Commands::Update(u) => update(&mut manager, u)?,
         Commands::List(l) => list(&mut manager, l)?,
     };
+
+    manager.save_lock_file()?;
 
     Ok(())
 }
