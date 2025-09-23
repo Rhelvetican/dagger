@@ -44,6 +44,18 @@ impl GitManager {
         Ok(reference.ok_or(GitError::from_str("Repository does not have tags."))?)
     }
 
+    pub fn list_tags(&self, id: &str) -> DagRes<Vec<String>> {
+        let install_path = PathImpl::balatro_mod_dir().join(id);
+        let repo = Repository::open(&install_path)?;
+
+        Ok(repo
+            .tag_names(None)?
+            .iter()
+            .flatten()
+            .map(ToString::to_string)
+            .collect())
+    }
+
     pub fn install(&self, args: &mut InstallCommandArgs) -> DagRes<(String, String)> {
         let id = &*args.get_id().to_string().into_boxed_str();
 
@@ -85,10 +97,10 @@ impl GitManager {
 
             if tag == "*" {
                 refer = self.get_latest_tag(&repo)?;
-            } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/{}", tag)) {
+            } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/v{}", tag)) {
                 refer = reference;
             } else {
-                refer = repo.find_reference(&format!("refs/tags/v{}", tag))?
+                refer = repo.find_reference(&format!("refs/tags/{}", tag))?
             };
 
             let commit_obj = refer.peel(ObjectType::Commit)?;
@@ -172,10 +184,10 @@ impl GitManager {
 
             if tag == "*" {
                 refer = self.get_latest_tag(&repo)?;
-            } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/{}", tag)) {
+            } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/v{}", tag)) {
                 refer = reference;
             } else {
-                refer = repo.find_reference(&format!("refs/tags/v{}", tag))?
+                refer = repo.find_reference(&format!("refs/tags/{}", tag))?
             };
 
             let commit_obj = refer.peel(ObjectType::Commit)?;

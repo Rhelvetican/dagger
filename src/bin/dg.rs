@@ -16,7 +16,7 @@ fn main() -> DagRes<()> {
     match args.cmd {
         Commands::Install(iargs) => manager.install(iargs)?,
         Commands::Update(uargs) => manager.update(uargs)?,
-        Commands::List => manager.list()?,
+        Commands::List(largs) => manager.list(largs)?,
     };
 
     Ok(())

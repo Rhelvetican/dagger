@@ -11,7 +11,7 @@ pub struct Cli {
 pub enum Commands {
     Install(InstallCommandArgs),
     Update(UpdateCommandArgs),
-    List,
+    List(ListCommandArgs),
 }
 
 #[derive(Debug, Clone, Args)]
@@ -81,5 +81,46 @@ impl InstallCommandArgs {
         } else {
             unreachable!()
         }
+    }
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct ListCommandArgs {
+    #[command(subcommand)]
+    pub cmd: ListCommands,
+    #[arg(short, long, default_value_t = false)]
+    pub list_tags: bool,
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub enum ListCommands {
+    All,
+    Item(ListArgs),
+}
+
+impl ListCommands {
+    #[must_use]
+    pub fn is_all(&self) -> bool {
+        matches!(self, Self::All)
+    }
+
+    pub fn as_item(&self) -> Option<&ListArgs> {
+        if let Self::Item(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct ListArgs {
+    #[arg(short, long)]
+    id: String,
+}
+
+impl ListArgs {
+    pub fn id(&self) -> &str {
+        &self.id
     }
 }

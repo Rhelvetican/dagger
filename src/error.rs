@@ -22,6 +22,16 @@ pub enum DaggerError {
     /// An error in IO operation.
     #[error("[Dagger/IO] Error: {}", .0)]
     Io(#[from] io::Error),
+    /// An error that occurred during runtime.
+    #[error("[Dagger/Runtime] Error: {}", .0)]
+    Runtime(&'static str),
+}
+
+impl DaggerError {
+    #[inline]
+    pub fn runtime(msg: &'static str) -> Self {
+        Self::Runtime(msg)
+    }
 }
 
 pub type DagRes<T> = Result<T, DaggerError>;

@@ -1,6 +1,6 @@
 use crate::{
-    DagRes, DaggerLockfile, DaggerLockfileEntry, InstallCommandArgs, UpdateCommandArgs,
-    installer::git::GitManager,
+    DagRes, DaggerError, DaggerLockfile, DaggerLockfileEntry, InstallCommandArgs,
+    UpdateCommandArgs, cli::ListCommandArgs, installer::git::GitManager,
 };
 
 #[derive(Debug, Default)]
@@ -31,14 +31,31 @@ impl DaggerModManager {
         Ok(())
     }
 
-    pub fn list(&self) -> DagRes<()> {
-        for (id, entr) in self.lock_files.iter() {
-            println!(
-                "{} => Current branch: {}, Current commit: {}",
-                id,
-                entr.branch(),
-                entr.commit()
-            );
+    pub fn list(&self, args: ListCommandArgs) -> DagRes<()> {
+        if let Some(item) = args.cmd.as_item() {
+            let entr = self.lock_files.get(item.id()).ok_or(DaggerError::runtime(
+                "No such mod were installed with dagger.",
+            ))?;
+
+            println!("{} => {}", item.id(), entr);
+
+            if args.list_tags {
+                self.git
+                    .list_tags(item.id())?
+                    .iter()
+                    .for_each(|tag| println!("\t{}", tag));
+            }
+        } else if args.cmd.is_all() {
+            for (id, entr) in self.lock_files.iter() {
+                println!("{} => {}", id, entr);
+
+                if args.list_tags {
+                    self.git
+                        .list_tags(id)?
+                        .iter()
+                        .for_each(|tag| println!("\t{}", tag));
+                }
+            }
         }
 
         Ok(())

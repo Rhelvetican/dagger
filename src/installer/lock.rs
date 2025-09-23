@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::{Display, Formatter, Result as FmtRes},
     fs::File,
     io::{BufWriter, Read, Write},
     ops::{Deref, DerefMut},
@@ -24,6 +25,17 @@ pub struct DaggerLockfile {
 pub struct DaggerLockfileEntry {
     branch: String,
     commit: String,
+}
+
+impl Display for DaggerLockfileEntry {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtRes {
+        write!(
+            f,
+            "Current branch: {}, Current commit: {}",
+            self.branch(),
+            self.commit()
+        )
+    }
 }
 
 impl DaggerLockfileEntry {
