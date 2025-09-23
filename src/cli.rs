@@ -13,19 +13,25 @@ pub enum Commands {
     Install(InstallCommandArgs),
     /// Update Balatro mods.
     Update(UpdateCommandArgs),
-    /// List installed Balatro mods.
+    /// Lists all installed Balatro mods.
     List(ListCommandArgs),
 }
 
 #[derive(Debug, Clone, Args)]
 pub struct InstallCommandArgs {
-    /// Url to the mod repository.
+    /// The URL of the mod repository. A URL is valid if it links to a Git repository.
+    /// "Maintainer/Repository" is also valid, and is processed as a link to Github.
     url: String,
     #[arg(long)]
+    /// The name of the folder to install the mod in. Defaults to the name of the repository.
+    /// Dagger will use the name of the folder as the mod's id.
     pub id: Option<String>,
     #[arg(short, long)]
+    /// The branch of the mod that you want to install. Defaults to the main branch.
     pub branch: Option<String>,
     #[arg(short, long)]
+    /// The tag corresponding to the version of the mod that you want to install.
+    /// Defaults to the latest commit. Use * to get the latest tag/release.
     pub tag: Option<String>,
 }
 
@@ -37,7 +43,9 @@ pub struct UpdateCommandArgs {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum UpdateCommands {
+    /// Update a specified mod.
     Item(UpdateItem),
+    /// Update all installed mods.
     All,
 }
 
@@ -58,10 +66,14 @@ impl UpdateCommands {
 
 #[derive(Debug, Clone, Args)]
 pub struct UpdateItem {
+    /// The name of the folder that contains the mod you want to update.
     pub id: String,
     #[arg(short, long)]
+    /// The branch of the mod that you want to install the update from. Defaults to the main branch.
     pub branch: Option<String>,
     #[arg(short, long)]
+    /// The tag corresponding to the version of the mod that you want to update to.
+    /// Defaults to the latest commit. Use * to get the latest tag/release.
     pub tag: Option<String>,
 }
 
@@ -102,12 +114,15 @@ pub struct ListCommandArgs {
     #[command(subcommand)]
     pub cmd: ListCommands,
     #[arg(short, long, default_value_t = false)]
+    /// Displays every tag that the mod repository has.
     pub list_tags: bool,
 }
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum ListCommands {
+    /// Lists the installation information of all installed mods.
     All,
+    /// Lists the installation information of a specific mod.
     Item(ListArgs),
 }
 
@@ -128,6 +143,7 @@ impl ListCommands {
 
 #[derive(Debug, Clone, Args)]
 pub struct ListArgs {
+    /// The name of the folder that contains the mod whose information you want to get.
     id: String,
 }
 

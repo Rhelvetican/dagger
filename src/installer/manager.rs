@@ -34,7 +34,7 @@ impl DaggerModManager {
     pub fn list(&self, args: ListCommandArgs) -> DagRes<()> {
         if let Some(item) = args.cmd.as_item() {
             let entr = self.lock_files.get(item.id()).ok_or(DaggerError::runtime(
-                "No such mod were installed with dagger.",
+                "No such mod was installed with Dagger.",
             ))?;
 
             println!("{} => {}", item.id(), entr);
@@ -69,7 +69,7 @@ impl DaggerModManager {
                 entr.set_commit(commit);
             }
 
-            println!("All mods are up-to-date!");
+            println!("All mods are up to date!");
         } else if let Some(item) = args.cmd.as_item() {
             let (branch, commit) = self.git.update(item)?;
 

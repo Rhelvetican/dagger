@@ -107,7 +107,7 @@ impl GitManager {
 
             let commit_tag = commit_obj
                 .as_commit()
-                .ok_or(GitError::from_str("Tag does not points to a commit."))?;
+                .ok_or(GitError::from_str("Tag does not point to a commit."))?;
 
             repo.checkout_tree(
                 commit_tag.as_object(),
@@ -194,7 +194,7 @@ impl GitManager {
 
             let commit_tag = commit_obj
                 .as_commit()
-                .ok_or(GitError::from_str("Tag does not points to a commit."))?;
+                .ok_or(GitError::from_str("Tag does not point to a commit."))?;
 
             repo.checkout_tree(
                 commit_tag.as_object(),
