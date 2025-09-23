@@ -15,6 +15,35 @@ use crate::{
 pub struct GitManager;
 
 impl GitManager {
+    fn get_latest_tag<'a>(&self, repo: &'a Repository) -> DagRes<Reference<'a>> {
+        let reference = repo
+            .tag_names(None)?
+            .iter()
+            .flatten()
+            .filter_map(|s| repo.find_reference(&format!("refs/tags/{}", s)).ok())
+            .fold(None::<Reference>, |latest, this| {
+                if let Some(latest) = latest {
+                    if this
+                        .peel_to_commit()
+                        .map(|c| c.time().seconds())
+                        .unwrap_or(i64::MIN)
+                        > latest
+                            .peel_to_commit()
+                            .map(|c| c.time().seconds())
+                            .unwrap_or(i64::MIN)
+                    {
+                        Some(this)
+                    } else {
+                        Some(latest)
+                    }
+                } else {
+                    Some(this)
+                }
+            });
+
+        Ok(reference.ok_or(GitError::from_str("Repository does not have tags."))?)
+    }
+
     pub fn install(&self, args: &mut InstallCommandArgs) -> DagRes<(String, String)> {
         let id = &*args.get_id().to_string().into_boxed_str();
 
@@ -55,32 +84,7 @@ impl GitManager {
             let refer;
 
             if tag == "*" {
-                let reference = repo
-                    .tag_names(None)?
-                    .iter()
-                    .flatten()
-                    .filter_map(|s| repo.find_reference(&format!("refs/tags/{}", s)).ok())
-                    .fold(None::<Reference>, |latest, this| {
-                        if let Some(latest) = latest {
-                            if this
-                                .peel_to_commit()
-                                .map(|c| c.time().seconds())
-                                .unwrap_or(i64::MIN)
-                                > latest
-                                    .peel_to_commit()
-                                    .map(|c| c.time().seconds())
-                                    .unwrap_or(i64::MIN)
-                            {
-                                Some(this)
-                            } else {
-                                Some(latest)
-                            }
-                        } else {
-                            Some(this)
-                        }
-                    });
-
-                refer = reference.ok_or(GitError::from_str("Repository does not have tags."))?;
+                refer = self.get_latest_tag(&repo)?;
             } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/{}", tag)) {
                 refer = reference;
             } else {
@@ -117,7 +121,9 @@ impl GitManager {
         remote_callbacks.transfer_progress(|prog| spinner.update(prog));
 
         let mut fetch_opts = FetchOptions::new();
-        fetch_opts.depth(1).remote_callbacks(remote_callbacks);
+        fetch_opts
+            .remote_callbacks(remote_callbacks)
+            .download_tags(AutotagOption::None);
 
         let install_path = PathImpl::balatro_mod_dir().join(id);
         let repo = Repository::open(&install_path)?;
@@ -149,6 +155,10 @@ impl GitManager {
         let install_path = PathImpl::balatro_mod_dir().join(&args.id);
         let repo = Repository::open(&install_path)?;
 
+        if args.tag.is_some() {
+            fetch_opts.download_tags(AutotagOption::All);
+        }
+
         let mut remote = repo.find_remote("origin")?;
 
         if let Some(branch) = args.branch.as_deref() {
@@ -161,32 +171,7 @@ impl GitManager {
             let refer;
 
             if tag == "*" {
-                let reference = repo
-                    .tag_names(None)?
-                    .iter()
-                    .flatten()
-                    .filter_map(|s| repo.find_reference(&format!("refs/tags/{}", s)).ok())
-                    .fold(None::<Reference>, |latest, this| {
-                        if let Some(latest) = latest {
-                            if this
-                                .peel_to_commit()
-                                .map(|c| c.time().seconds())
-                                .unwrap_or(i64::MIN)
-                                > latest
-                                    .peel_to_commit()
-                                    .map(|c| c.time().seconds())
-                                    .unwrap_or(i64::MIN)
-                            {
-                                Some(this)
-                            } else {
-                                Some(latest)
-                            }
-                        } else {
-                            Some(this)
-                        }
-                    });
-
-                refer = reference.ok_or(GitError::from_str("Repository does not have tags."))?;
+                refer = self.get_latest_tag(&repo)?;
             } else if let Ok(reference) = repo.find_reference(&format!("refs/tags/{}", tag)) {
                 refer = reference;
             } else {

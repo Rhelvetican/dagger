@@ -27,12 +27,30 @@ pub struct InstallCommandArgs {
 }
 
 #[derive(Debug, Clone, Args)]
-#[group(required = true, multiple = false)]
 pub struct UpdateCommandArgs {
-    #[arg(short, long, default_value_t = false)]
-    pub all: bool,
-    #[command(flatten)]
-    pub item: Option<UpdateItem>,
+    #[command(subcommand)]
+    pub cmd: UpdateCommands,
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub enum UpdateCommands {
+    Item(UpdateItem),
+    All,
+}
+
+impl UpdateCommands {
+    pub fn as_item(&self) -> Option<&UpdateItem> {
+        if let Self::Item(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub fn is_all(&self) -> bool {
+        matches!(self, Self::All)
+    }
 }
 
 #[derive(Debug, Clone, Args)]
