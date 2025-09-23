@@ -31,7 +31,36 @@ impl DaggerModManager {
         Ok(())
     }
 
+    pub fn list(&self) -> DagRes<()> {
+        for (id, entr) in self.lock_files.iter() {
+            println!(
+                "{} => Current branch: {}, Current commit: {}",
+                id,
+                entr.branch(),
+                entr.commit()
+            );
+        }
+
+        Ok(())
+    }
+
     pub fn update(&mut self, args: UpdateCommandArgs) -> DagRes<()> {
-        todo!()
+        if args.all {
+            for (id, entr) in self.lock_files.iter_mut() {
+                let (branch, commit) = self.git.update_with_id(id)?;
+                entr.set_branch(branch);
+                entr.set_commit(commit);
+            }
+
+            println!("All mods are up-to-date!");
+        } else if let Some(item) = args.item {
+            let (branch, commit) = self.git.update(&item)?;
+            self.lock_files.entry(item.id).and_modify(|entr| {
+                entr.set_branch(branch);
+                entr.set_commit(commit);
+            });
+        }
+
+        Ok(())
     }
 }

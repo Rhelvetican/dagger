@@ -12,7 +12,6 @@ use toml::ser::Buffer;
 use crate::{
     DaggerPathApi, PathImpl,
     error::{DagRes, TomlError},
-    path::AsPath,
 };
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -33,12 +32,24 @@ impl DaggerLockfileEntry {
         Self { branch, commit }
     }
 
+    #[inline]
     pub fn set_branch(&mut self, branch: String) {
         self.branch = branch;
     }
 
+    #[inline]
     pub fn set_commit(&mut self, commit: String) {
         self.commit = commit;
+    }
+
+    #[inline]
+    pub fn branch(&self) -> &str {
+        &self.branch
+    }
+
+    #[inline]
+    pub fn commit(&self) -> &str {
+        &self.commit
     }
 }
 

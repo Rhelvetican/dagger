@@ -11,6 +11,7 @@ pub struct Cli {
 pub enum Commands {
     Install(InstallCommandArgs),
     Update(UpdateCommandArgs),
+    List,
 }
 
 #[derive(Debug, Clone, Args)]
@@ -37,11 +38,11 @@ pub struct UpdateCommandArgs {
 #[derive(Debug, Clone, Args)]
 pub struct UpdateItem {
     #[arg(short, long)]
-    id: String,
+    pub id: String,
     #[arg(short, long)]
-    branch: Option<String>,
+    pub branch: Option<String>,
     #[arg(short, long)]
-    tag: Option<String>,
+    pub tag: Option<String>,
 }
 
 impl InstallCommandArgs {
