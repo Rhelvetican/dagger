@@ -1,7 +1,4 @@
-use crate::{
-    DagRes, DaggerError, DaggerLockfile, DaggerLockfileEntry, InstallCommandArgs,
-    UpdateCommandArgs, cli::ListCommandArgs, installer::git::GitManager,
-};
+use crate::{DagRes, DaggerError, DaggerLockfile, DaggerLockfileEntry, installer::git::GitManager};
 
 #[derive(Debug, Default)]
 pub struct DaggerModManager {
@@ -18,7 +15,7 @@ impl DaggerModManager {
         }
     }
 
-    pub fn install(&mut self, mut args: InstallCommandArgs) -> DagRes<()> {
+    pub fn install(&mut self, args: InstallCommandArgs) -> DagRes<()> {
         let (branch, commit) = self.git.install(&mut args)?;
 
         self.lock_files.insert(

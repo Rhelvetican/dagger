@@ -6,10 +6,7 @@ use git2::{
     build::{CheckoutBuilder, RepoBuilder},
 };
 
-use crate::{
-    DagRes, DaggerPathApi, InstallCommandArgs, PathImpl, cli::UpdateItem,
-    utils::spinner::TransferProgress,
-};
+use crate::{DagRes, DaggerPathApi, PathImpl, installer::api::InstallableMod};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct GitManager;
@@ -56,8 +53,18 @@ impl GitManager {
             .collect())
     }
 
-    pub fn install(&self, args: &mut InstallCommandArgs) -> DagRes<(String, String)> {
-        let id = &*args.get_id().to_string().into_boxed_str();
+    pub fn install<I: InstallableMod>(&self, args: &I) -> DagRes<(String, String)> {
+        let id = &*args
+            .get_id()
+            .unwrap_or(
+                args.get_url()
+                    .split("/")
+                    .last()
+                    .map(|s| s.trim_end_matches(".git"))
+                    .unwrap_or_default(),
+            )
+            .to_string()
+            .into_boxed_str();
 
         let mut spinner = TransferProgress::new(TransferProgress::construct_spinner(&format!(
             "Installing {}...\r\n",

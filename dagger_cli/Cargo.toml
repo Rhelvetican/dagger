@@ -9,7 +9,7 @@
 
 [[bin]]
     name = "dg"
-    src  = "src/main.rs"
+    path = "src/dg.rs"
 
 [dependencies]
     dagger_lib = { path = "../dagger_lib/" }
