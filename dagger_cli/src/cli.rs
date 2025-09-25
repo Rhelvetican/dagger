@@ -160,14 +160,14 @@ impl InstallableMod for InstallCommandArgs {
     }
 
     fn get_id(&self) -> Str<'_> {
-        Str::Owned(
+        Str::Owned(self.id.clone().unwrap_or_else(|| {
             self.url()
                 .split('/')
                 .next_back()
                 .map(|s| s.trim_end_matches(".git"))
                 .unwrap_or_default()
-                .to_string(),
-        )
+                .to_string()
+        }))
     }
 
     fn get_branch(&self) -> Option<Str<'_>> {
