@@ -12,6 +12,8 @@ pub struct Cli {
 pub enum Commands {
     /// Install a Balatro mod.
     Install(InstallCommandArgs),
+    /// Install a Balatro mod.
+    Uninstall(UninstallCommandArgs),
     /// Update Balatro mods.
     Update(UpdateCommandArgs),
     /// Lists all installed Balatro mods.
@@ -34,6 +36,12 @@ pub struct InstallCommandArgs {
     /// The tag corresponding to the version of the mod that you want to install.
     /// Defaults to the latest commit. Use * to get the latest tag/release.
     pub tag: Option<String>,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct UninstallCommandArgs {
+    /// ID of the mod to be uninstalled.
+    pub id: String,
 }
 
 #[derive(Debug, Clone, Args)]

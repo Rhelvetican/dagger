@@ -1,3 +1,5 @@
+use std::fs::remove_dir_all;
+
 use crate::{
     DagRes, DaggerError, DaggerLockfile, DaggerLockfileEntry, DaggerPathApi, PathImpl,
     installer::{
@@ -40,6 +42,12 @@ impl DaggerModManager {
             DaggerLockfileEntry::new(branch, commit),
         );
 
+        Ok(())
+    }
+
+    pub fn uninstall(&mut self, id: &str) -> DagRes<()> {
+        let mod_dir = PathImpl::balatro_mod_dir().join(id);
+        remove_dir_all(&mod_dir)?;
         Ok(())
     }
 

@@ -21,6 +21,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Commands::Install(i) => install(&mut manager, i)?,
         Commands::Update(u) => update(&mut manager, u)?,
         Commands::List(l) => list(&mut manager, l)?,
+        Commands::Uninstall(un) => manager.uninstall(&un.id)?,
     };
 
     manager.save_lock_file()?;
