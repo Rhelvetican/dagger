@@ -12,7 +12,7 @@ pub struct Cli {
 pub enum Commands {
     /// Install a Balatro mod.
     Install(InstallCommandArgs),
-    /// Install a Balatro mod.
+    /// Uninstall a Balatro mod.
     Uninstall(UninstallCommandArgs),
     /// Update Balatro mods.
     Update(UpdateCommandArgs),
