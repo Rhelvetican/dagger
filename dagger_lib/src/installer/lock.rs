@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter, Result as FmtRes},
-    fs::File,
+    fs::{File, create_dir_all},
     io::{BufWriter, Read, Write},
     ops::{Deref, DerefMut},
     path::PathBuf,
@@ -68,7 +68,13 @@ impl DaggerLockfileEntry {
 impl DaggerLockfile {
     #[inline]
     pub fn get_lock_path() -> PathBuf {
-        PathImpl::config_dir().as_path().join("daggerLock.toml")
+        let path = PathImpl::config_dir();
+
+        if !path.is_dir() {
+            let _ = create_dir_all(&path);
+        }
+
+        path.join("daggerLock.toml")
     }
 
     pub fn load() -> DagRes<Self> {
