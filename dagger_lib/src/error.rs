@@ -34,4 +34,4 @@ impl DaggerError {
     }
 }
 
-pub type DagRes<T> = Result<T, DaggerError>;
+pub type Result<T> = ::std::result::Result<T, DaggerError>;

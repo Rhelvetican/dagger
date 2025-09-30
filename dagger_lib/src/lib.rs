@@ -1,12 +1,5 @@
-mod error;
-mod installer;
-mod path;
+#[macro_use]
+mod macros;
 
-pub use error::*;
 pub use git2::Progress;
-pub use installer::{
-    DaggerModManager,
-    api::*,
-    lock::{DaggerLockfile, DaggerLockfileEntry},
-};
-pub use path::{DaggerPathApi, PathImpl};
+sub_mod!(api, error, path, cowstr);

@@ -1,5 +1,4 @@
 use clap::{Args, Parser, Subcommand};
-use dagger_lib::{InstallableMod, ListableMod, Str, UpgradableMod};
 
 #[derive(Debug, Clone, Parser)]
 #[command(version, about, long_about = None)]
@@ -159,68 +158,5 @@ pub struct ListArgs {
 impl ListArgs {
     pub fn id(&self) -> &str {
         &self.id
-    }
-}
-
-impl InstallableMod for InstallCommandArgs {
-    fn get_url(&self) -> Str<'_> {
-        Str::Owned(self.url())
-    }
-
-    fn get_id(&self) -> Str<'_> {
-        Str::Owned(self.id.clone().unwrap_or_else(|| {
-            self.url()
-                .split('/')
-                .next_back()
-                .map(|s| s.trim_end_matches(".git"))
-                .unwrap_or_default()
-                .to_string()
-        }))
-    }
-
-    fn get_branch(&self) -> Option<Str<'_>> {
-        self.branch.as_deref().map(Str::Borrowed)
-    }
-
-    fn get_tag(&self) -> Option<Str<'_>> {
-        self.tag.as_deref().map(Str::Borrowed)
-    }
-}
-
-impl UpgradableMod for UpdateItem {
-    fn get_id(&self) -> Str<'_> {
-        Str::Borrowed(self.id.as_str())
-    }
-
-    fn get_branch(&self) -> Option<Str<'_>> {
-        self.branch.as_deref().map(Str::Borrowed)
-    }
-
-    fn get_tag(&self) -> Option<Str<'_>> {
-        self.tag.as_deref().map(Str::Borrowed)
-    }
-}
-
-impl UpgradableMod for &UpdateItem {
-    fn get_id(&self) -> Str<'_> {
-        Str::Borrowed(self.id.as_str())
-    }
-
-    fn get_branch(&self) -> Option<Str<'_>> {
-        self.branch.as_deref().map(Str::Borrowed)
-    }
-
-    fn get_tag(&self) -> Option<Str<'_>> {
-        self.tag.as_deref().map(Str::Borrowed)
-    }
-}
-
-impl ListableMod for ListCommandArgs {
-    fn get_id(&self) -> Option<Str<'_>> {
-        self.cmd.as_item().map(|arg| arg.id()).map(Str::Borrowed)
-    }
-
-    fn list_tags(&self) -> bool {
-        self.list_tags
     }
 }
