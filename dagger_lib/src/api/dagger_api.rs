@@ -1,14 +1,33 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{CowStr, Result};
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Metadata<'a> {
-    branch: CowStr<'a>,
-    commit: CowStr<'a>,
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Metadata {
+    branch: String,
+    commit: String,
+}
+
+impl Metadata {
+    #[inline]
+    pub fn new(branch: String, commit: String) -> Self {
+        Self { branch, commit }
+    }
+
+    #[inline]
+    pub fn branch(&self) -> &str {
+        self.branch.as_str()
+    }
+
+    #[inline]
+    pub fn commit(&self) -> &str {
+        self.commit.as_str()
+    }
 }
 
 pub trait DaggerModManagerApi<'a> {
-    fn install<I: InstallArgs>(&mut self, args: I) -> Result<Metadata<'a>>;
-    fn update<U: UpgradeArgs>(&mut self, args: U) -> Result<Metadata<'a>>;
+    fn install<I: InstallArgs>(&mut self, args: I) -> Result<Metadata>;
+    fn update<U: UpgradeArgs>(&mut self, args: U) -> Result<Metadata>;
     fn uninstall<U: UninstallArgs>(&mut self, args: U) -> Result<()>;
     fn list<L: ListArgs>(&self, args: L) -> Result<()>;
 }

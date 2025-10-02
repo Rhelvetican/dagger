@@ -1,4 +1,4 @@
-use dagger_lib::{GitCallback, Progress};
+use dagger_lib::{GitCallback, git2::Progress};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::{marker::PhantomData, num::NonZeroUsize};
 

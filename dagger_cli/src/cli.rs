@@ -1,4 +1,5 @@
 use clap::{Args, Parser, Subcommand};
+use dagger_lib::{CowStr, InstallArgs, ListArgs, RepoDetails, UninstallArgs, UpgradeArgs};
 
 #[derive(Debug, Clone, Parser)]
 #[command(version, about, long_about = None)]
@@ -23,7 +24,7 @@ pub enum Commands {
 pub struct InstallCommandArgs {
     /// The URL of the mod repository. A URL is valid if it links to a Git repository.
     /// "Maintainer/Repository" is also valid, and is processed as a link to Github.
-    url: String,
+    pub url: String,
     #[arg(long)]
     /// The name of the folder to install the mod in. Defaults to the name of the repository.
     /// Dagger will use the name of the folder as the mod's id.
@@ -55,21 +56,6 @@ pub enum UpdateCommands {
     Item(UpdateItem),
     /// Update all installed mods.
     All,
-}
-
-impl UpdateCommands {
-    pub fn as_item(&self) -> Option<&UpdateItem> {
-        if let Self::Item(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub fn is_all(&self) -> bool {
-        matches!(self, Self::All)
-    }
 }
 
 #[derive(Debug, Clone, Args)]
@@ -105,7 +91,7 @@ impl InstallCommandArgs {
         }
     }
 
-    pub fn url(&self) -> String {
+    pub fn get_url(&self) -> String {
         if self.url.starts_with("https://") || self.url.starts_with("http://") {
             return self.url.clone();
         }
@@ -131,32 +117,73 @@ pub enum ListCommands {
     /// Lists the installation information of all installed mods.
     All,
     /// Lists the installation information of a specific mod.
-    Item(ListArgs),
-}
-
-impl ListCommands {
-    #[must_use]
-    pub fn is_all(&self) -> bool {
-        matches!(self, Self::All)
-    }
-
-    pub fn as_item(&self) -> Option<&ListArgs> {
-        if let Self::Item(v) = self {
-            Some(v)
-        } else {
-            None
-        }
-    }
+    Item(ListCliArgs),
 }
 
 #[derive(Debug, Clone, Args)]
-pub struct ListArgs {
+pub struct ListCliArgs {
     /// The ID of the mod whose information you want to get.
     id: String,
 }
 
-impl ListArgs {
-    pub fn id(&self) -> &str {
-        &self.id
+impl RepoDetails for InstallCommandArgs {
+    #[inline]
+    fn tag(&self) -> Option<CowStr<'_>> {
+        self.tag.as_deref().map(CowStr::new)
+    }
+
+    #[inline]
+    fn branch(&self) -> Option<CowStr<'_>> {
+        self.branch.as_deref().map(CowStr::new)
+    }
+}
+
+impl RepoDetails for UpdateItem {
+    #[inline]
+    fn tag(&self) -> Option<CowStr<'_>> {
+        self.tag.as_deref().map(CowStr::new)
+    }
+
+    #[inline]
+    fn branch(&self) -> Option<CowStr<'_>> {
+        self.branch.as_deref().map(CowStr::new)
+    }
+}
+
+impl InstallArgs for InstallCommandArgs {
+    fn id(&self) -> CowStr<'_> {
+        CowStr::new(self.id.as_deref().unwrap_or_else(|| {
+            self.url
+                .split("/")
+                .last()
+                .map(|s| s.trim_end_matches(".git"))
+                .unwrap()
+        }))
+    }
+
+    #[inline]
+    fn url(&self) -> CowStr<'_> {
+        CowStr::new(self.get_url())
+    }
+}
+
+impl UpgradeArgs for UpdateItem {
+    #[inline]
+    fn id(&self) -> CowStr<'_> {
+        CowStr::new(self.id.as_str())
+    }
+}
+
+impl UninstallArgs for UninstallCommandArgs {
+    #[inline]
+    fn id(&self) -> CowStr<'_> {
+        CowStr::new(self.id.as_str())
+    }
+}
+
+impl ListArgs for ListCliArgs {
+    #[inline]
+    fn id(&self) -> CowStr<'_> {
+        CowStr::new(self.id.as_str())
     }
 }
