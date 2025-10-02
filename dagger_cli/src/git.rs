@@ -79,8 +79,11 @@ impl Repo {
 #[derive(Default, Debug, Clone, Copy)]
 pub struct GitManager;
 
-impl GitManager {
-    pub fn install<I, Cb>(&self, args: I, cb: Option<&mut Cb>) -> Result<Metadata>
+impl DaggerModManagerApi for GitManager {
+    type Result<T> = Result<T>;
+    type Metadata = Metadata;
+
+    fn install<I, Cb>(&mut self, args: I, cb: &mut Cb) -> Result<Metadata>
     where
         I: InstallArgs,
         Cb: GitCallback,
@@ -88,9 +91,7 @@ impl GitManager {
         let id = args.id();
         let mut remote = RemoteCallbacks::new();
 
-        if let Some(cb) = cb {
-            remote.transfer_progress(|p| cb.callback(p));
-        }
+        remote.transfer_progress(|p| cb.callback(p));
 
         let mut fetch_opts = FetchOptions::new();
         fetch_opts.depth(1).remote_callbacks(remote);
@@ -161,15 +162,13 @@ impl GitManager {
         ))
     }
 
-    pub fn update<U, Cb>(&self, args: U, cb: Option<&mut Cb>) -> Result<Metadata>
+    fn update<U, Cb>(&mut self, args: U, cb: &mut Cb) -> Result<Metadata>
     where
         U: UpgradeArgs,
         Cb: GitCallback,
     {
         let mut remote_callbacks = RemoteCallbacks::new();
-        if let Some(cb) = cb {
-            remote_callbacks.transfer_progress(|pg| cb.callback(pg));
-        }
+        remote_callbacks.transfer_progress(|pg| cb.callback(pg));
 
         let mut fetch_opts = FetchOptions::new();
         fetch_opts.depth(1).remote_callbacks(remote_callbacks);
@@ -241,12 +240,18 @@ impl GitManager {
         ))
     }
 
-    pub fn uninstall<U: UninstallArgs>(&self, args: U) -> Result<()> {
+    fn uninstall<U: UninstallArgs>(&mut self, args: U) -> Result<()> {
         let install_path = DaggerPaths::balatro_mod_dir().join(args.id().as_str());
         remove_dir_all(&install_path)?;
         Ok(())
     }
 
+    fn list<L: ListArgs>(&self, _: L, _: bool) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl GitManager {
     pub fn get_tags<L: ListArgs>(&self, args: L) -> Result<Vec<String>> {
         let install_path = DaggerPaths::balatro_mod_dir().join(args.id().as_str());
         let repo = Repo::new(Repository::open(&install_path)?);

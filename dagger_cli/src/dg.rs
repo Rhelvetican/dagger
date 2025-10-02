@@ -1,4 +1,5 @@
 use clap::Parser;
+use dagger_lib::DaggerModManagerApi;
 
 use crate::{cli::*, error::*, manager::DaggerModManager, spinner::*};
 
@@ -15,12 +16,9 @@ fn main() -> Result<()> {
 
     match cli.cmd {
         Commands::Install(mut i) => {
-            let mut cb = TransferProgress::new(TransferProgress::construct_spinner(&format!(
-                "Installing {}...",
-                i.get_id()
-            )));
+            let mut cb = TransferProgress::new(&format!("Installing {}...", i.get_id()));
 
-            manager.install(i, Some(&mut cb))?
+            manager.install(i, &mut cb)?
         }
 
         Commands::Update(up) => match up.cmd {
@@ -28,19 +26,14 @@ fn main() -> Result<()> {
                 let ids = manager.get_mod_ids();
 
                 for id in ids {
-                    let mut cb = TransferProgress::new(TransferProgress::construct_spinner(
-                        &format!("Installing {}...", &id),
-                    ));
-                    manager.update(&*id, Some(&mut cb))?;
+                    let mut cb = TransferProgress::new(&format!("Installing {}...", &id));
+                    manager.update(&*id, &mut cb)?;
                 }
             }
 
             UpdateCommands::Item(item) => {
-                let mut cb = TransferProgress::new(TransferProgress::construct_spinner(&format!(
-                    "Installing {}...",
-                    &item.id
-                )));
-                manager.update(item, Some(&mut cb))?;
+                let mut cb = TransferProgress::new(&format!("Installing {}...", &item.id));
+                manager.update(item, &mut cb)?;
             }
         },
 
@@ -50,8 +43,7 @@ fn main() -> Result<()> {
             ListCommands::All => manager
                 .get_mod_ids()
                 .iter()
-                .map(|s| manager.list(&**s, list.list_tags))
-                .collect::<Result<_>>()?,
+                .try_for_each(|s| manager.list(s.as_str(), list.list_tags))?,
             ListCommands::Item(item) => manager.list(item, list.list_tags)?,
         },
     };

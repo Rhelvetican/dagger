@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{CowStr, Result};
+use crate::{CowStr, GitCallback};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Metadata {
@@ -34,11 +34,23 @@ impl Metadata {
     }
 }
 
-pub trait DaggerModManagerApi<'a> {
-    fn install<I: InstallArgs>(&mut self, args: I) -> Result<Metadata>;
-    fn update<U: UpgradeArgs>(&mut self, args: U) -> Result<Metadata>;
-    fn uninstall<U: UninstallArgs>(&mut self, args: U) -> Result<()>;
-    fn list<L: ListArgs>(&self, args: L) -> Result<()>;
+pub trait DaggerModManagerApi {
+    type Metadata;
+    type Result<T>;
+
+    fn install<I, Cb>(&mut self, args: I, cb: &mut Cb) -> Self::Result<Self::Metadata>
+    where
+        I: InstallArgs,
+        Cb: GitCallback;
+
+    fn update<U, Cb>(&mut self, args: U, cb: &mut Cb) -> Self::Result<Self::Metadata>
+    where
+        U: UpgradeArgs,
+        Cb: GitCallback;
+
+    fn uninstall<U: UninstallArgs>(&mut self, args: U) -> Self::Result<()>;
+
+    fn list<L: ListArgs>(&self, args: L, show_tags: bool) -> Self::Result<()>;
 }
 
 pub trait RepoDetails {

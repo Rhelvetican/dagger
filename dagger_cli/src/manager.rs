@@ -7,8 +7,8 @@ use std::{
 };
 
 use dagger_lib::{
-    DaggerError, DaggerPaths, GitCallback, InstallArgs, ListArgs, Metadata, UninstallArgs,
-    UpgradeArgs,
+    DaggerError, DaggerModManagerApi, DaggerPaths, GitCallback, InstallArgs, ListArgs, Metadata,
+    UninstallArgs, UpgradeArgs,
 };
 use serde::{Deserialize, Serialize};
 use toml::{Deserializer, Serializer, ser::Buffer};
@@ -29,83 +29,50 @@ pub struct DaggerModManager {
 static DAGGER_LOCK_PATH: LazyLock<PathBuf> =
     LazyLock::new(|| DaggerPaths::config_dir().join("dagger_lock.toml"));
 
-impl DaggerModManager {
-    #[inline]
-    pub fn new() -> Self {
-        let mut buf = String::new();
+impl DaggerModManagerApi for DaggerModManager {
+    type Metadata = ();
+    type Result<T> = Result<T>;
 
-        File::open(&*DAGGER_LOCK_PATH)
-            .map_err(DaggerError::from)
-            .map_err(CliError::from)
-            .and_then(|mut f| {
-                f.read_to_string(&mut buf)
-                    .map_err(DaggerError::from)
-                    .map_err(CliError::from)
-            })
-            .and_then(|_| {
-                Deserializer::parse(&buf)
-                    .map_err(TomlError::from)
-                    .map_err(CliError::from)
-            })
-            .and_then(|de| {
-                Self::deserialize(de)
-                    .map_err(TomlError::from)
-                    .map_err(CliError::from)
-            })
-            .unwrap_or_default()
-    }
-
-    #[inline]
-    pub fn get_mod_ids(&self) -> Vec<String> {
-        self.status.keys().cloned().collect()
-    }
-
-    #[inline]
-    pub fn install<I, Cb>(&mut self, args: I, cb: Option<&mut Cb>) -> Result<()>
+    fn install<I, Cb>(&mut self, args: I, cb: &mut Cb) -> Self::Result<()>
     where
         I: InstallArgs,
         Cb: GitCallback,
     {
         let (id, metadata) = (args.id().to_string(), self.internal.install(args, cb)?);
         metadata.tag().and_then(|s| {
-            println!("Checked out to tag {}", s);
+            cb.println(&format!("Checked out to tag {}", s));
             None::<()>
         });
 
-        println!("Checked out to commit: {}", metadata.commit());
-        println!("{} has been installed successfully.", &id);
+        cb.println(&format!("Checked out to commit: {}", metadata.commit()));
+        cb.println(&format!("{} has been installed successfully.", &id));
         self.status.insert(id, metadata);
         Ok(())
     }
 
-    #[inline]
-    pub fn uninstall<U>(&mut self, args: U) -> Result<()>
-    where
-        U: UninstallArgs,
-    {
-        self.status.remove(&args.id().to_string());
-        self.internal.uninstall(args)?;
-        Ok(())
-    }
-
-    #[inline]
-    pub fn update<U, Cb>(&mut self, args: U, cb: Option<&mut Cb>) -> Result<()>
+    fn update<U, Cb>(&mut self, args: U, cb: &mut Cb) -> Result<()>
     where
         U: UpgradeArgs,
         Cb: GitCallback,
     {
         let (id, metadata) = (args.id().to_string(), self.internal.update(args, cb)?);
         metadata.tag().and_then(|s| {
-            println!("Checked out to {},{}", &id, s);
+            cb.println(&format!("Checked out to {},{}", &id, s));
             None::<()>
         });
-        println!("Checked out to commit: {}", metadata.commit());
-        println!("{} has been updated successfully.", &id);
+        cb.println(&format!("Checked out to commit: {}", metadata.commit()));
+        cb.println(&format!("{} has been updated successfully.", &id));
         self.status.insert(id, metadata.clone());
         Ok(())
     }
 
-    pub fn list<L>(&self, args: L, show_tags: bool) -> Result<()>
+    fn uninstall<U: UninstallArgs>(&mut self, args: U) -> Self::Result<()> {
+        self.status.remove(&args.id().to_string());
+        self.internal.uninstall(args)?;
+        Ok(())
+    }
+
+    fn list<L>(&self, args: L, show_tags: bool) -> Result<()>
     where
         L: ListArgs,
     {
@@ -145,6 +112,38 @@ impl DaggerModManager {
 
         println!("\n\n\n");
         Ok(())
+    }
+}
+
+impl DaggerModManager {
+    #[inline]
+    pub fn new() -> Self {
+        let mut buf = String::new();
+
+        File::open(&*DAGGER_LOCK_PATH)
+            .map_err(DaggerError::from)
+            .map_err(CliError::from)
+            .and_then(|mut f| {
+                f.read_to_string(&mut buf)
+                    .map_err(DaggerError::from)
+                    .map_err(CliError::from)
+            })
+            .and_then(|_| {
+                Deserializer::parse(&buf)
+                    .map_err(TomlError::from)
+                    .map_err(CliError::from)
+            })
+            .and_then(|de| {
+                Self::deserialize(de)
+                    .map_err(TomlError::from)
+                    .map_err(CliError::from)
+            })
+            .unwrap_or_default()
+    }
+
+    #[inline]
+    pub fn get_mod_ids(&self) -> Vec<String> {
+        self.status.keys().cloned().collect()
     }
 
     pub fn refresh(&mut self) {
