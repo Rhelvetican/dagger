@@ -1,4 +1,4 @@
-use std::{fs::remove_dir_all, path::Path};
+use std::{fs::remove_dir_all, path::Path, thread::sleep, time::Duration};
 
 use dagger_lib::{
     git2::{
@@ -114,6 +114,7 @@ impl GitManager {
             DaggerPaths::balatro_mod_dir().join(id.as_str()).clean()?,
         )?);
 
+        sleep(Duration::from_millis(500));
         if let Some(tag) = args.tag().as_deref() {
             println!("Checking out {}", tag);
 
@@ -181,6 +182,7 @@ impl GitManager {
             remote.fetch::<&str>(&[], Some(&mut fetch_opts), None)?;
         }
 
+        sleep(Duration::from_millis(500));
         if let Some(tag) = args.tag().as_ref() {
             let refer = if (tag) == "*" {
                 repo.get_latest_tag()?
