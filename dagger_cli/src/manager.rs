@@ -8,14 +8,14 @@ use std::{
 
 use dagger_lib::{
     DaggerError, DaggerPaths, GitCallback, InstallArgs, ListArgs, Metadata, UninstallArgs,
-    UpgradeArgs, git2::Repository,
+    UpgradeArgs,
 };
 use serde::{Deserialize, Serialize};
 use toml::{Deserializer, Serializer, ser::Buffer};
 
 use crate::{
     error::{CliError, Result, TomlError},
-    git::{GitManager, Repo},
+    git::GitManager,
 };
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
