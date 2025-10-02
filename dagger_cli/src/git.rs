@@ -1,4 +1,4 @@
-use std::{fs::remove_dir_all, path::Path, thread::sleep, time::Duration};
+use std::{fs::remove_dir_all, path::Path};
 
 use dagger_lib::{
     git2::{
