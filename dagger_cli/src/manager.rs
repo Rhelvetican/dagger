@@ -67,7 +67,14 @@ impl DaggerModManager {
         Cb: GitCallback,
     {
         let (id, metadata) = (args.id().to_string(), self.internal.install(args, cb)?);
-        self.status.insert(id, metadata.clone());
+        metadata.tag().and_then(|s| {
+            println!("Checked out to {},{}", &id, s);
+            None::<()>
+        });
+
+        println!("Checked out to commit: {}", metadata.commit());
+        println!("{} has been installed successfully.", &id);
+        self.status.insert(id, metadata);
         Ok(())
     }
 
@@ -88,6 +95,12 @@ impl DaggerModManager {
         Cb: GitCallback,
     {
         let (id, metadata) = (args.id().to_string(), self.internal.update(args, cb)?);
+        metadata.tag().and_then(|s| {
+            println!("Checked out to {},{}", &id, s);
+            None::<()>
+        });
+        println!("Checked out to commit: {}", metadata.commit());
+        println!("{} has been updated successfully.", &id);
         self.status.insert(id, metadata.clone());
         Ok(())
     }

@@ -116,8 +116,6 @@ impl GitManager {
 
         sleep(Duration::from_millis(500));
         if let Some(tag) = args.tag().as_deref() {
-            println!("Checking out {}", tag);
-
             let git_ref = if tag == "*" {
                 repo.get_latest_tag()?
             } else {
@@ -128,7 +126,6 @@ impl GitManager {
 
             let commit = git_ref.peel_to_commit()?;
 
-            println!("Checking out to commit: {}", commit.id());
             repo.repo.checkout_tree(
                 commit.as_object(),
                 Some(
@@ -151,6 +148,11 @@ impl GitManager {
                 .unwrap_or_default()
                 .to_string(),
             head.peel_to_commit()?.id().to_string(),
+            match args.tag().as_ref().map(CowStr::as_str) {
+                None => None,
+                Some("*") => Some(repo.get_latest_tag()?.name().unwrap().to_string()),
+                Some(s) => Some(s.to_string()),
+            },
         ))
     }
 
@@ -221,6 +223,11 @@ impl GitManager {
         Ok(Metadata::new(
             head.shorthand().unwrap_or_default().to_string(),
             head.peel_to_commit()?.id().to_string(),
+            match args.tag().as_ref().map(CowStr::as_str) {
+                None => None,
+                Some("*") => Some(repo.get_latest_tag()?.name().unwrap().to_string()),
+                Some(s) => Some(s.to_string()),
+            },
         ))
     }
 

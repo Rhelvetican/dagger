@@ -6,12 +6,17 @@ use crate::{CowStr, Result};
 pub struct Metadata {
     branch: String,
     commit: String,
+    tag: Option<String>,
 }
 
 impl Metadata {
     #[inline]
-    pub fn new(branch: String, commit: String) -> Self {
-        Self { branch, commit }
+    pub fn new(branch: String, commit: String, tag: Option<String>) -> Self {
+        Self {
+            branch,
+            commit,
+            tag,
+        }
     }
 
     #[inline]
@@ -22,6 +27,10 @@ impl Metadata {
     #[inline]
     pub fn commit(&self) -> &str {
         self.commit.as_str()
+    }
+
+    pub fn tag(&self) -> Option<&str> {
+        self.tag.as_deref()
     }
 }
 
