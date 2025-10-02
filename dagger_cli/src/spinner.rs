@@ -6,6 +6,7 @@ use std::{marker::PhantomData, num::NonZeroUsize};
 pub struct TransferProgress<'a> {
     spinner: MultiProgress,
     ptr: Option<ProgressBar>,
+    flag: bool,
     total: u64,
     __data: PhantomData<&'a ()>,
 }
@@ -13,9 +14,7 @@ pub struct TransferProgress<'a> {
 impl<'a> TransferProgress<'a> {
     fn construct_std_spinner(msg: &str) -> ProgressBar {
         let spinner = ProgressBar::new_spinner();
-
         spinner.set_style(ProgressStyle::with_template("{msg}").unwrap());
-
         spinner.set_message(msg.to_string());
 
         spinner
@@ -26,6 +25,7 @@ impl<'a> TransferProgress<'a> {
         let mut std = Self {
             spinner: MultiProgress::new(),
             ptr: None,
+            flag: false,
             total: 0,
             __data: PhantomData,
         };
@@ -45,6 +45,11 @@ impl GitCallback for TransferProgress<'_> {
             && let Some(total) = NonZeroUsize::new(progress.total_objects()).map(|n| n.get() as u64)
             && let Some(ptr) = self.ptr.as_ref()
         {
+            if !self.flag {
+                let _ = self.spinner.clear();
+                self.flag = true;
+            }
+
             let style = ProgressStyle::default_bar()
                 .template(
                     "{spinner:.green} {msg} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
