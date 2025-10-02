@@ -110,7 +110,7 @@ impl DaggerModManagerApi for DaggerModManager {
             );
         }
 
-        println!("\n\n\n");
+        println!("\n");
         Ok(())
     }
 }
