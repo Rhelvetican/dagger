@@ -47,9 +47,9 @@ impl Repo {
                             .map(|c| c.time().seconds())
                             .unwrap_or(i64::MIN)
                 }) {
-                    Some(this)
-                } else {
                     latest
+                } else {
+                    Some(this)
                 }
             })
             .ok_or(DaggerError::runtime("Failed to get latest tag."))
