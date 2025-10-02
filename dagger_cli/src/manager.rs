@@ -68,7 +68,7 @@ impl DaggerModManager {
     {
         let (id, metadata) = (args.id().to_string(), self.internal.install(args, cb)?);
         metadata.tag().and_then(|s| {
-            println!("Checked out to {},{}", &id, s);
+            println!("Checked out to tag {}", s);
             None::<()>
         });
 

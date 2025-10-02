@@ -114,7 +114,6 @@ impl GitManager {
             DaggerPaths::balatro_mod_dir().join(id.as_str()).clean()?,
         )?);
 
-        sleep(Duration::from_millis(500));
         if let Some(tag) = args.tag().as_deref() {
             let git_ref = if tag == "*" {
                 repo.get_latest_tag()?
@@ -150,7 +149,13 @@ impl GitManager {
             head.peel_to_commit()?.id().to_string(),
             match args.tag().as_ref().map(CowStr::as_str) {
                 None => None,
-                Some("*") => Some(repo.get_latest_tag()?.name().unwrap().to_string()),
+                Some("*") => Some(
+                    repo.get_latest_tag()?
+                        .name()
+                        .unwrap()
+                        .trim_start_matches("refs/tags/")
+                        .to_string(),
+                ),
                 Some(s) => Some(s.to_string()),
             },
         ))
@@ -184,7 +189,6 @@ impl GitManager {
             remote.fetch::<&str>(&[], Some(&mut fetch_opts), None)?;
         }
 
-        sleep(Duration::from_millis(500));
         if let Some(tag) = args.tag().as_ref() {
             let refer = if (tag) == "*" {
                 repo.get_latest_tag()?
@@ -225,7 +229,13 @@ impl GitManager {
             head.peel_to_commit()?.id().to_string(),
             match args.tag().as_ref().map(CowStr::as_str) {
                 None => None,
-                Some("*") => Some(repo.get_latest_tag()?.name().unwrap().to_string()),
+                Some("*") => Some(
+                    repo.get_latest_tag()?
+                        .name()
+                        .unwrap()
+                        .trim_start_matches("refs/tags/")
+                        .to_string(),
+                ),
                 Some(s) => Some(s.to_string()),
             },
         ))
