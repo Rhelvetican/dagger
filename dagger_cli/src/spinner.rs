@@ -14,11 +14,7 @@ impl<'a> TransferProgress<'a> {
     fn construct_std_spinner(msg: &str) -> ProgressBar {
         let spinner = ProgressBar::new_spinner();
 
-        spinner.set_style(
-            ProgressStyle::with_template("{spinner:.green} {msg}")
-                .unwrap()
-                .tick_chars("⡿⣟⣯⣷⣾⣽⣻⢿"),
-        );
+        spinner.set_style(ProgressStyle::with_template("{msg}").unwrap());
 
         spinner.set_message(msg.to_string());
 
