@@ -40,7 +40,7 @@ impl DaggerModManagerApi for DaggerModManager {
     {
         let (id, metadata) = (args.id().to_string(), self.internal.install(args, cb)?);
         metadata.tag().and_then(|s| {
-            cb.println(&format!("Checked out to tag {}", s));
+            cb.println(&format!("Checked out to tag: {}", s));
             None::<()>
         });
 
@@ -57,7 +57,7 @@ impl DaggerModManagerApi for DaggerModManager {
     {
         let (id, metadata) = (args.id().to_string(), self.internal.update(args, cb)?);
         metadata.tag().and_then(|s| {
-            cb.println(&format!("Checked out to {},{}", &id, s));
+            cb.println(&format!("Checked out to tag: {},{}", &id, s));
             None::<()>
         });
         cb.println(&format!("Checked out to commit: {}", metadata.commit()));

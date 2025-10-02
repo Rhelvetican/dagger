@@ -137,29 +137,51 @@ impl DaggerModManagerApi for GitManager {
                         .use_theirs(true),
                 ),
             )?;
+
+            let head = repo.repo.head()?.resolve()?;
+
+            Ok(Metadata::new(
+                head.is_branch()
+                    .then(|| head.shorthand())
+                    .flatten()
+                    .unwrap_or_default()
+                    .to_string(),
+                commit.id().to_string(),
+                match args.tag().as_ref().map(CowStr::as_str) {
+                    None => None,
+                    Some("*") => Some(
+                        repo.get_latest_tag()?
+                            .name()
+                            .unwrap()
+                            .trim_start_matches("refs/tags/")
+                            .to_string(),
+                    ),
+                    Some(s) => Some(s.to_string()),
+                },
+            ))
+        } else {
+            let head = repo.repo.head()?;
+
+            Ok(Metadata::new(
+                head.is_branch()
+                    .then(|| head.shorthand())
+                    .flatten()
+                    .unwrap_or_default()
+                    .to_string(),
+                head.peel_to_commit()?.id().to_string(),
+                match args.tag().as_ref().map(CowStr::as_str) {
+                    None => None,
+                    Some("*") => Some(
+                        repo.get_latest_tag()?
+                            .name()
+                            .unwrap()
+                            .trim_start_matches("refs/tags/")
+                            .to_string(),
+                    ),
+                    Some(s) => Some(s.to_string()),
+                },
+            ))
         }
-
-        let head = repo.repo.head()?;
-
-        Ok(Metadata::new(
-            head.is_branch()
-                .then(|| head.shorthand())
-                .flatten()
-                .unwrap_or_default()
-                .to_string(),
-            head.peel_to_commit()?.id().to_string(),
-            match args.tag().as_ref().map(CowStr::as_str) {
-                None => None,
-                Some("*") => Some(
-                    repo.get_latest_tag()?
-                        .name()
-                        .unwrap()
-                        .trim_start_matches("refs/tags/")
-                        .to_string(),
-                ),
-                Some(s) => Some(s.to_string()),
-            },
-        ))
     }
 
     fn update<U, Cb>(&mut self, args: U, cb: &mut Cb) -> Result<Metadata>
