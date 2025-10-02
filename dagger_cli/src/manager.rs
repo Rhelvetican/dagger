@@ -122,7 +122,8 @@ impl DaggerModManager {
     │ │ ╭─ Current branch: {} 
     │ ╰─┴─ Current commit: {} 
     │
-    ╰─── Tags:"#,
+    ╰─── Tags:
+"#,
                 item.branch(),
                 item.commit()
             );
