@@ -11,7 +11,7 @@ use dagger_lib::{
     UninstallArgs, UpgradeArgs,
 };
 use serde::{Deserialize, Serialize};
-use toml::{Deserializer, Serializer, ser::Buffer};
+use toml::{ser::Buffer, Deserializer, Serializer};
 
 use crate::{
     error::{CliError, Result, TomlError},

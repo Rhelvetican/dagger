@@ -11,6 +11,7 @@ mod spinner;
 
 fn main() -> Result<()> {
     let mut manager = DaggerModManager::new();
+    manager.refresh();
 
     let cli = Cli::parse();
 
@@ -23,16 +24,14 @@ fn main() -> Result<()> {
 
         Commands::Update(up) => match up.cmd {
             UpdateCommands::All => {
-                let ids = manager.get_mod_ids();
-
-                for id in ids {
-                    let mut cb = TransferProgress::new(&format!("Installing {}...", &id));
+                for id in manager.get_mod_ids() {
+                    let mut cb = TransferProgress::new(&format!("Updating {}...", &id));
                     manager.update(&*id, &mut cb)?;
                 }
             }
 
             UpdateCommands::Item(item) => {
-                let mut cb = TransferProgress::new(&format!("Installing {}...", &item.id));
+                let mut cb = TransferProgress::new(&format!("Updating {}...", &item.id));
                 manager.update(item, &mut cb)?;
             }
         },
