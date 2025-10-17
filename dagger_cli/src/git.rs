@@ -1,4 +1,8 @@
-use std::{fs::remove_dir_all, path::Path};
+use std::{
+    fs::{create_dir_all, remove_dir_all},
+    io::ErrorKind,
+    path::Path,
+};
 
 use dagger_lib::{
     git2::{
@@ -8,13 +12,18 @@ use dagger_lib::{
     *,
 };
 
-pub trait CleanUpPath {
-    fn clean(&self) -> Result<&Self>;
+pub trait InitPath {
+    fn initialize(&self) -> Result<&Self>;
 }
 
-impl CleanUpPath for Path {
-    fn clean(&self) -> Result<&Path> {
-        remove_dir_all(self)?;
+impl InitPath for Path {
+    fn initialize(&self) -> Result<&Path> {
+        if let Err(err) = remove_dir_all(self)
+            && err.kind() == ErrorKind::NotFound
+        {
+            create_dir_all(self)?;
+        };
+
         Ok(self)
     }
 }
@@ -25,28 +34,19 @@ pub struct Repo {
 
 impl Repo {
     #[inline]
-    pub fn new(repo: Repository) -> Self {
-        Self { repo }
-    }
+    pub fn new(repo: Repository) -> Self { Self { repo } }
 
     pub fn get_latest_tag(&self) -> Result<Reference<'_>> {
         self.repo
             .tag_names(None)
             .iter()
             .flatten()
-            .filter_map(|s| {
-                s.and_then(|s| self.repo.find_reference(&format!("refs/tags/{}", s)).ok())
-            })
+            .filter_map(|s| s.and_then(|s| self.repo.find_reference(&format!("refs/tags/{}", s)).ok()))
             .fold(None, |latest, this| {
-                if latest.as_ref().is_some_and(|latest_ref: &Reference<'_>| {
-                    this.peel_to_commit()
-                        .map(|c| c.time().seconds())
-                        .unwrap_or(i64::MIN)
-                        < latest_ref
-                            .peel_to_commit()
-                            .map(|c| c.time().seconds())
-                            .unwrap_or(i64::MIN)
-                }) {
+                if latest
+                    .as_ref()
+                    .is_some_and(|latest_ref: &Reference<'_>| this.peel_to_commit().map(|c| c.time().seconds()).unwrap_or(i64::MIN) < latest_ref.peel_to_commit().map(|c| c.time().seconds()).unwrap_or(i64::MIN))
+                {
                     latest
                 } else {
                     Some(this)
@@ -56,14 +56,7 @@ impl Repo {
     }
 
     pub fn list_tags(&self) -> Result<Vec<String>> {
-        let mut tags = self
-            .repo
-            .tag_names(None)
-            .iter()
-            .flatten()
-            .flatten()
-            .map(ToString::to_string)
-            .collect::<Vec<_>>();
+        let mut tags = self.repo.tag_names(None).iter().flatten().flatten().map(ToString::to_string).collect::<Vec<_>>();
 
         tags.sort_by_key(|tag| {
             self.repo
@@ -80,8 +73,8 @@ impl Repo {
 pub struct GitManager;
 
 impl DaggerModManagerApi for GitManager {
-    type Result<T> = Result<T>;
     type Metadata = Metadata;
+    type Result<T> = Result<T>;
 
     fn install<I, Cb>(&mut self, args: I, cb: &mut Cb) -> Result<Metadata>
     where
@@ -110,52 +103,32 @@ impl DaggerModManagerApi for GitManager {
         }
 
         repo.fetch_options(fetch_opts);
-        let repo = Repo::new(repo.clone(
-            &args.url(),
-            DaggerPaths::balatro_mod_dir().join(id.as_str()).clean()?,
-        )?);
+        let install_path = DaggerPaths::balatro_mod_dir().join(id.as_str()).initialize()?;
+
+        let repo = Repo::new(repo.clone(&args.url(), DaggerPaths::balatro_mod_dir().join(id.as_str()).initialize()?)?);
 
         if let Some(tag) = args.tag().as_deref() {
             let git_ref = if tag == "*" {
                 repo.get_latest_tag()?
             } else {
-                repo.repo
-                    .find_reference(&format!("refs/tags/v{}", tag))
-                    .or_else(|_| repo.repo.find_reference(&format!("refs/tags/{}", tag)))?
+                repo.repo.find_reference(&format!("refs/tags/v{}", tag)).or_else(|_| repo.repo.find_reference(&format!("refs/tags/{}", tag)))?
             };
 
             let commit = git_ref.peel_to_commit()?;
 
             repo.repo.checkout_tree(
                 commit.as_object(),
-                Some(
-                    CheckoutBuilder::new()
-                        .force()
-                        .allow_conflicts(true)
-                        .recreate_missing(true)
-                        .remove_untracked(true)
-                        .use_theirs(true),
-                ),
+                Some(CheckoutBuilder::new().force().allow_conflicts(true).recreate_missing(true).remove_untracked(true).use_theirs(true)),
             )?;
 
             let head = repo.repo.head()?.resolve()?;
 
             Ok(Metadata::new(
-                head.is_branch()
-                    .then(|| head.shorthand())
-                    .flatten()
-                    .unwrap_or_default()
-                    .to_string(),
+                head.is_branch().then(|| head.shorthand()).flatten().unwrap_or_default().to_string(),
                 commit.id().to_string(),
                 match args.tag().as_ref().map(CowStr::as_str) {
                     None => None,
-                    Some("*") => Some(
-                        repo.get_latest_tag()?
-                            .name()
-                            .unwrap()
-                            .trim_start_matches("refs/tags/")
-                            .to_string(),
-                    ),
+                    Some("*") => Some(repo.get_latest_tag()?.name().unwrap().trim_start_matches("refs/tags/").to_string()),
                     Some(s) => Some(s.to_string()),
                 },
             ))
@@ -163,21 +136,11 @@ impl DaggerModManagerApi for GitManager {
             let head = repo.repo.head()?;
 
             Ok(Metadata::new(
-                head.is_branch()
-                    .then(|| head.shorthand())
-                    .flatten()
-                    .unwrap_or_default()
-                    .to_string(),
+                head.is_branch().then(|| head.shorthand()).flatten().unwrap_or_default().to_string(),
                 head.peel_to_commit()?.id().to_string(),
                 match args.tag().as_ref().map(CowStr::as_str) {
                     None => None,
-                    Some("*") => Some(
-                        repo.get_latest_tag()?
-                            .name()
-                            .unwrap()
-                            .trim_start_matches("refs/tags/")
-                            .to_string(),
-                    ),
+                    Some("*") => Some(repo.get_latest_tag()?.name().unwrap().trim_start_matches("refs/tags/").to_string()),
                     Some(s) => Some(s.to_string()),
                 },
             ))
@@ -214,33 +177,18 @@ impl DaggerModManagerApi for GitManager {
             let refer = if (tag) == "*" {
                 repo.get_latest_tag()?
             } else {
-                repo.repo
-                    .find_reference(&format!("refs/tags/v{}", tag))
-                    .or_else(|_| repo.repo.find_reference(&format!("refs/tags/{}", tag)))?
+                repo.repo.find_reference(&format!("refs/tags/v{}", tag)).or_else(|_| repo.repo.find_reference(&format!("refs/tags/{}", tag)))?
             };
 
             let commit_obj = refer.peel_to_commit()?;
 
             repo.repo.checkout_tree(
                 commit_obj.as_object(),
-                Some(
-                    CheckoutBuilder::new()
-                        .force()
-                        .allow_conflicts(true)
-                        .recreate_missing(true)
-                        .remove_untracked(true)
-                        .use_theirs(true),
-                ),
+                Some(CheckoutBuilder::new().force().allow_conflicts(true).recreate_missing(true).remove_untracked(true).use_theirs(true)),
             )?;
         } else {
-            repo.repo.checkout_head(Some(
-                CheckoutBuilder::new()
-                    .force()
-                    .allow_conflicts(true)
-                    .recreate_missing(true)
-                    .remove_untracked(true)
-                    .use_theirs(true),
-            ))?;
+            repo.repo
+                .checkout_head(Some(CheckoutBuilder::new().force().allow_conflicts(true).recreate_missing(true).remove_untracked(true).use_theirs(true)))?;
         }
 
         let head = repo.repo.head()?;
@@ -250,13 +198,7 @@ impl DaggerModManagerApi for GitManager {
             head.peel_to_commit()?.id().to_string(),
             match args.tag().as_ref().map(CowStr::as_str) {
                 None => None,
-                Some("*") => Some(
-                    repo.get_latest_tag()?
-                        .name()
-                        .unwrap()
-                        .trim_start_matches("refs/tags/")
-                        .to_string(),
-                ),
+                Some("*") => Some(repo.get_latest_tag()?.name().unwrap().trim_start_matches("refs/tags/").to_string()),
                 Some(s) => Some(s.to_string()),
             },
         ))
@@ -268,9 +210,7 @@ impl DaggerModManagerApi for GitManager {
         Ok(())
     }
 
-    fn list<L: ListArgs>(&self, _: L, _: bool) -> Result<()> {
-        Ok(())
-    }
+    fn list<L: ListArgs>(&self, _: L, _: bool) -> Result<()> { Ok(()) }
 }
 
 impl GitManager {
